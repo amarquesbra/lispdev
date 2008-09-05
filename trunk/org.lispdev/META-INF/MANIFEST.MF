@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Lispdev Plug-in
+Bundle-SymbolicName: org.lispdev;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: org.lispdev.LispdevPlugin
+Bundle-Vendor: www.lispdev.org
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.debug.core,
+ org.eclipse.debug.ui
+Eclipse-LazyStart: true

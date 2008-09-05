@@ -1,0 +1,5 @@
+# Reports lisp launcher activity
+org.lispdev/trace/launch=true
+# Reports sbcl implementation activity
+org.lispdev/trace/sbcl=true
+
