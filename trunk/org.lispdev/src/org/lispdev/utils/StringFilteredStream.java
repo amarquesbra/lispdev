@@ -11,11 +11,11 @@ import java.io.OutputStream;
  * @author sk
  *
  */
-public class FilteredStream extends FilterOutputStream
+public class StringFilteredStream extends FilterOutputStream
 {
   private String str = "";
 
-  public FilteredStream(OutputStream aStream)
+  public StringFilteredStream(OutputStream aStream)
   {
     super(aStream);
   }
