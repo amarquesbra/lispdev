@@ -23,9 +23,18 @@ public class LispdevDebug
   
   public static void trace(int type, String msg)
   {
-    LispdevPlugin.getDefault().trace(type, msg);
+    String tag = "";
+    if( type >= LispdevPlugin.TRACE_TAGS.length )
+    {
+      logError("Trace type "+String.valueOf(type)+" is not defined");
+    }
+    else
+    {
+      tag = LispdevPlugin.TRACE_TAGS[type];
+    }
+    LispdevPlugin.getDefault().trace(type, "<"+tag+">"+ msg);
   }
-  
+ 
   private static String pluginID()
   {
     return LispdevPlugin.getDefault().getBundle().getSymbolicName();
