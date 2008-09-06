@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: LispDev Test Fragment
+Bundle-SymbolicName: org.lispdev.test
+Bundle-Version: 0.0.1
+Bundle-Vendor: lispdev.org
+Fragment-Host: org.lispdev;bundle-version="0.0.0"
+Require-Bundle: org.junit4
