@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -57,11 +58,30 @@ public class LispdevPlugin extends AbstractUIPlugin
     }
   }
   
+  private PrintStream traceStream;
+  
+  public void setTraceStream(PrintStream pr)
+  {
+    traceStream = pr;
+  }
+  
+  public PrintStream getTraceStream()
+  {
+    return traceStream;
+  }
+  
   public void trace(int type, String msg)
   {
     if( B_TRACES[type] )
     {
-      System.out.print(msg);
+      if( traceStream != null )
+      {
+        traceStream.print(msg);
+      }
+      else
+      {
+        System.out.print(msg);        
+      }
     }
   }
   
@@ -89,6 +109,7 @@ public class LispdevPlugin extends AbstractUIPlugin
     super.start(context);
     plugin = this;
     initTraces();
+    traceStream = System.out;
   }
 
   /*
@@ -112,11 +133,6 @@ public class LispdevPlugin extends AbstractUIPlugin
     return plugin;
   }
 
-  public static boolean isOSWindows()
-  {
-    return Platform.getOS().equals(Constants.OS_WIN32);
-  }
-  
   /**
    * Returns the string from the plugin's resource bundle, or 'key' if not
    * found.
@@ -191,4 +207,20 @@ public class LispdevPlugin extends AbstractUIPlugin
     return PlatformUI.getWorkbench().getDisplay().getActiveShell();
   }
 
+  public static boolean isOSWindows()
+  {
+    return Platform.getOS().equals(Constants.OS_WIN32);
+  }
+  
+  public static boolean isOSLinux()
+  {
+    return Platform.getOS().equals(Constants.OS_LINUX);
+  }
+  
+  public static boolean isOSMacOSX()
+  {
+    return Platform.getOS().equals(Constants.OS_MACOSX);
+  }
+  
+  
 }
