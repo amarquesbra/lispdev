@@ -3,8 +3,7 @@
 <plugin>
 
    <!-- Launcher -->
-   <extension
-         point="org.eclipse.debug.core.launchConfigurationTypes">
+   <extension point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
             delegate="org.lispdev.launcher.LispLaunchDelegate"
             id="org.lispdev.launch"
@@ -13,13 +12,23 @@
             public="true">
       </launchConfigurationType>
    </extension>
-   <extension
-         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+   <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
             class="org.lispdev.launcher.LispLaunchTabGroup"
             id="org.lispdev.launchConfigurationTabGroup"
             type="org.lispdev.launch">
       </launchConfigurationTabGroup>
+   </extension>
+   
+   <!-- ==== Views ==== -->
+   <!-- Repl -->
+   <extension point="org.eclipse.ui.views">
+      <view
+            allowMultiple="true"
+            class="org.lispdev.views.ReplView"
+            id="org.lispdev.replView"
+            name="Repl View">
+      </view>
    </extension>
 
 </plugin>
