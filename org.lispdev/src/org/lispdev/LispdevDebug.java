@@ -72,9 +72,9 @@ public class LispdevDebug
   /**
    * @param message
    * @param severity
-   *          Integer constant from org.eclipse.core.runtime.IStatus
+   *          Integer constant from {@org.eclipse.core.runtime.IStatus}
    */
-  public static void log(String message, int severity, Throwable e)
+  private static void log(String message, int severity, Throwable e)
   {
     LispdevPlugin.getDefault().getLog().log(
         new Status(severity, LispdevPlugin.PLUGIN_ID, 0, message, e));

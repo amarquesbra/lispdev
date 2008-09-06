@@ -158,7 +158,7 @@ public class LispdevPlugin extends AbstractUIPlugin
     try
     {
       if(resourceBundle == null)
-        resourceBundle = ResourceBundle.getBundle("org.lispdev.Resources");
+        resourceBundle = ResourceBundle.getBundle(PLUGIN_ID+".Resources");
     }
     catch(MissingResourceException x)
     {
@@ -221,6 +221,5 @@ public class LispdevPlugin extends AbstractUIPlugin
   {
     return Platform.getOS().equals(Constants.OS_MACOSX);
   }
-  
-  
+
 }

@@ -12,12 +12,12 @@ import java.io.PrintStream;
  */
 public class StringPrintStream extends PrintStream
 {
-  private FilteredStream str;
+  private StringFilteredStream str;
   
   public StringPrintStream()
   {
-    super(new FilteredStream(new ByteArrayOutputStream()));
-    str = (FilteredStream)super.out;
+    super(new StringFilteredStream(new ByteArrayOutputStream()));
+    str = (StringFilteredStream)super.out;
   }
   
   public void resetString()
@@ -29,6 +29,5 @@ public class StringPrintStream extends PrintStream
   {
     return str.getString();
   }
-
   
 }
