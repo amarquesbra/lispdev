@@ -7,6 +7,8 @@ import static org.junit.Assert.*;
 
 import org.lispdev.*;
 import org.lispdev.utils.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
 import org.junit.*;
 
 /**
@@ -65,66 +67,20 @@ public class LispdevTest
   }
 
   /**
-   * Test method for {@link org.lispdev.LispdevDebug#abort(java.lang.String, java.lang.Throwable)}.
+   * Test method for {@link org.lispdev.LispdevDebug#abort}.
    */
   @Test
-  public final void testAbort()
+  public final void abort()
   {
-    fail("Not yet implemented"); // TODO
+    try
+    {
+      LispdevDebug.abort("error", null);
+    }
+    catch(CoreException e)
+    {
+      assertEquals(IStatus.ERROR,e.getStatus().getSeverity());
+      assertEquals("error",e.getLocalizedMessage());
+    }
   }
 
-  /**
-   * Test method for {@link org.lispdev.LispdevDebug#showError(org.eclipse.swt.widgets.Shell, java.lang.String, org.eclipse.core.runtime.CoreException, boolean)}.
-   */
-  @Test
-  public final void testShowError()
-  {
-    fail("Not yet implemented"); // TODO
-  }
-
-  /**
-   * Test method for {@link org.lispdev.LispdevDebug#log(java.lang.String, int, java.lang.Throwable)}.
-   */
-  @Test
-  public final void testLog()
-  {
-    fail("Not yet implemented"); // TODO
-  }
-
-  /**
-   * Test method for {@link org.lispdev.LispdevDebug#logInfo(java.lang.String)}.
-   */
-  @Test
-  public final void testLogInfo()
-  {
-    fail("Not yet implemented"); // TODO
-  }
-
-  /**
-   * Test method for {@link org.lispdev.LispdevDebug#logWarning(java.lang.String)}.
-   */
-  @Test
-  public final void testLogWarning()
-  {
-    fail("Not yet implemented"); // TODO
-  }
-
-  /**
-   * Test method for {@link org.lispdev.LispdevDebug#logError(java.lang.String)}.
-   */
-  @Test
-  public final void testLogError()
-  {
-    fail("Not yet implemented"); // TODO
-  }
-
-  /**
-   * Test method for {@link org.lispdev.LispdevDebug#logException(java.lang.String, java.lang.Throwable)}.
-   */
-  @Test
-  public final void testLogException()
-  {
-    fail("Not yet implemented"); // TODO
-  }
-  
 }
