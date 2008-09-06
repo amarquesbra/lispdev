@@ -2,6 +2,7 @@ package org.lispdev;
 
 import java.util.ResourceBundle;
 
+import org.eclipse.osgi.service.environment.Constants;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -35,7 +36,7 @@ public class LispdevPlugin extends AbstractUIPlugin
   // functions in LispdevDebug static
   // Plugin can be static, but still make necessary initializations
   // To add test category: in the end of list, add public integer incremented by one (moved to LispdevDebug)
-  // add string identifying trace to S_TRACES, add TRACE_PATH+identifying string
+  // add string identifying trace to TRACE_TAGS, add TRACE_PATH+identifying string
   // to .options file
   // Usage in code: printTrace(integer representing trace type, message)
   // Usage in debug: Go-to launch dialog and turn tracing on/off
@@ -44,14 +45,14 @@ public class LispdevPlugin extends AbstractUIPlugin
   private static final String TRACE_PATH = LispdevPlugin.PLUGIN_ID + "/trace/";
   
   // collection of identifying strings
-  private static final String[] S_TRACES = new String[]{"launch","sbcl"};
-  private boolean[] B_TRACES = new boolean[S_TRACES.length];
+  public static final String[] TRACE_TAGS = new String[]{"launch","sbcl"};
+  private boolean[] B_TRACES = new boolean[TRACE_TAGS.length];
   
   private void initTraces()
   {
-    for(int i = 0; i < S_TRACES.length; ++i)
+    for(int i = 0; i < TRACE_TAGS.length; ++i)
     {
-      String val = Platform.getDebugOption(TRACE_PATH+S_TRACES[i]);
+      String val = Platform.getDebugOption(TRACE_PATH+TRACE_TAGS[i]);
       B_TRACES[i] = (val != null && val.equalsIgnoreCase("true"));
     }
   }
@@ -113,7 +114,7 @@ public class LispdevPlugin extends AbstractUIPlugin
 
   public static boolean isOSWindows()
   {
-    return System.getProperty("os.name").toLowerCase().contains("windows");
+    return Platform.getOS().equals(Constants.OS_WIN32);
   }
   
   /**
