@@ -3,13 +3,14 @@
  */
 package org.lispdev.test;
 
-import static org.junit.Assert.*;
-
 import org.lispdev.*;
 import org.lispdev.utils.*;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.junit.*;
+
+import static org.junit.Assert.*;
 
 /**
  * @author sk
