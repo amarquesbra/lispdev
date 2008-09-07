@@ -20,14 +20,14 @@ public class LispdevTest
 {
   
   /**
-   * Test method for {@link org.lispdev.LispdevPlugin#PLUGIN_ID}.
+   * Test method for {@link org.lispdev.LispdevPlugin#ID}.
    */
   @Test
   public void pluginID()
   {
     
     assertEquals(LispdevPlugin.getDefault().getBundle().getSymbolicName(),
-        LispdevPlugin.PLUGIN_ID);
+        LispdevPlugin.ID);
   }
 
   private final String getTraceString(int type, String msg)

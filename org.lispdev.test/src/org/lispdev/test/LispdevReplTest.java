@@ -5,6 +5,8 @@ package org.lispdev.test;
 
 import org.lispdev.views.ReplView;
 
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.ui.*;
 import org.junit.*;
 
@@ -33,6 +35,13 @@ public class LispdevReplTest
     IViewPart view = getPage().showView(ReplView.ID);
     getPage().hideView(view);
   }
-  
+
+  @Test
+  public void replPrint() throws PartInitException
+  {
+    ReplView view = (ReplView)getPage().showView(ReplView.ID);
+    view.repl.print("some text", "some context", 
+        new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)});
+  }
   
 }
