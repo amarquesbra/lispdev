@@ -22,11 +22,11 @@ public class LispdevPlugin extends AbstractUIPlugin
 {
 
   // The plug-in ID
-  public static final String PLUGIN_ID = "org.lispdev";
+  public static final String ID = "org.lispdev";
 
-  public static final String ATTR_LISP_EXE = PLUGIN_ID + ".ATTR_LISP_EXE";
-  public static final String ATTR_LISP_FLAVOR = PLUGIN_ID + ".ATTR_LISP_FLAVOR";
-  public static final String ID_LAUNCH_CONFIGURATION_TYPE = PLUGIN_ID
+  public static final String ATTR_LISP_EXE = ID + ".ATTR_LISP_EXE";
+  public static final String ATTR_LISP_FLAVOR = ID + ".ATTR_LISP_FLAVOR";
+  public static final String ID_LAUNCH_CONFIGURATION_TYPE = ID
       + ".launchType";
 
   public static final String CL_FLAVOR_SBCL = "SBCL";
@@ -43,7 +43,7 @@ public class LispdevPlugin extends AbstractUIPlugin
   // Usage in debug: Go-to launch dialog and turn tracing on/off
   // Usage during run: start eclipse like this: eclipse.exe -debug c:/eclipse/plugins/org.lispdev/.options
   // not tested yet. maybe need to replace debug with trace
-  private static final String TRACE_PATH = LispdevPlugin.PLUGIN_ID + "/trace/";
+  private static final String TRACE_PATH = LispdevPlugin.ID + "/trace/";
   
   // collection of identifying strings
   public static final String[] TRACE_TAGS = new String[]{"launch","sbcl"};
@@ -158,7 +158,7 @@ public class LispdevPlugin extends AbstractUIPlugin
     try
     {
       if(resourceBundle == null)
-        resourceBundle = ResourceBundle.getBundle(PLUGIN_ID+".Resources");
+        resourceBundle = ResourceBundle.getBundle(ID+".Resources");
     }
     catch(MissingResourceException x)
     {
@@ -177,7 +177,7 @@ public class LispdevPlugin extends AbstractUIPlugin
    */
   private static ImageDescriptor getImageDescriptor(String path)
   {
-    return AbstractUIPlugin.imageDescriptorFromPlugin(PLUGIN_ID, path);
+    return AbstractUIPlugin.imageDescriptorFromPlugin(ID, path);
   }
   
   public static String getPluginPath()

@@ -44,7 +44,7 @@ public class LispdevDebug
   // in catch block use showError to display what happened
   public static void abort(String message, Throwable e) throws CoreException
   {
-    throw new CoreException(new Status(IStatus.ERROR, LispdevPlugin.PLUGIN_ID,
+    throw new CoreException(new Status(IStatus.ERROR, LispdevPlugin.ID,
         0, message, e));
   }
 
@@ -77,7 +77,7 @@ public class LispdevDebug
   private static void log(String message, int severity, Throwable e)
   {
     LispdevPlugin.getDefault().getLog().log(
-        new Status(severity, LispdevPlugin.PLUGIN_ID, 0, message, e));
+        new Status(severity, LispdevPlugin.ID, 0, message, e));
   }
 
   public static void logInfo(String message)
