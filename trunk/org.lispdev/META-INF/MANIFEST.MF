@@ -8,5 +8,7 @@ Bundle-Vendor: www.lispdev.org
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.debug.core,
- org.eclipse.debug.ui
+ org.eclipse.debug.ui,
+ org.eclipse.jface.text,
+ org.eclipse.ui.editors
 Eclipse-LazyStart: true
