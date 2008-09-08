@@ -4,6 +4,7 @@
 package org.lispdev.views;
 
 import org.lispdev.LispdevPlugin;
+import org.lispdev.views.repl.Repl;
 
 import org.eclipse.jface.text.source.VerticalRuler;
 import org.eclipse.swt.SWT;

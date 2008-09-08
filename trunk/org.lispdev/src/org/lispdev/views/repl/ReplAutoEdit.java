@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.lispdev.views;
+package org.lispdev.views.repl;
 
 import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
@@ -26,9 +26,14 @@ public class ReplAutoEdit implements IAutoEditStrategy
   public void customizeDocumentCommand(IDocument d, DocumentCommand c)
   {
     if( repl == null ) return;
-    if( !repl.isInEditMode() ) return;
+    if( !repl.isInEditMode() )
+    {
+      repl.logWarning("Called Auto Edit command when repl is in read-only mode");
+      return;
+    }
     if( c.offset < repl.getEditOffset() )
     {
+      repl.logTrace("Carret is in read-only region, moving to start of write region");
       c.offset = repl.getEditOffset();
     }
   }
