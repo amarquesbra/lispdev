@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.lispdev.views;
+package org.lispdev.views.repl;
 
 /**
  * @author sk

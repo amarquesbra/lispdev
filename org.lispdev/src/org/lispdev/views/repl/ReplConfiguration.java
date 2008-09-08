@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.lispdev.views;
+package org.lispdev.views.repl;
 
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.source.ISourceViewer;
