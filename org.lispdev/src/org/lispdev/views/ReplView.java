@@ -4,11 +4,16 @@
 package org.lispdev.views;
 
 import org.lispdev.LispdevPlugin;
+import org.lispdev.views.repl.IReplInputListener;
+import org.lispdev.views.repl.PartitionData;
 import org.lispdev.views.repl.Repl;
+import org.lispdev.views.repl.ReplEchoListener;
+import org.lispdev.views.repl.ReplInputTrigger;
 
 import org.eclipse.jface.text.source.VerticalRuler;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -71,12 +76,23 @@ public class ReplView extends ViewPart
     //repl.getTextWidget().setFont(newFont);
 
     repl.setEditable(true);
-    repl.print("some text", null, 
+    repl.appendText("some text", null, 
         new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)});
-    repl.startEdit("Enter your command>", "this prompt",null);
-    
+    repl.startEdit("Enter your command>", "this prompt",
+        new StyleRange[]{new StyleRange(0, "Enter your command>".length()+1,
+            null, null, SWT.BOLD)});
+    ReplInputTrigger it = new ReplInputTrigger(repl){
+      @Override
+      protected boolean check(VerifyEvent event)
+      {
+        return (event.stateMask == SWT.NONE &&
+            (event.keyCode == '\r' || event.keyCode == '\n'));
+      }
+    };
+    ReplEchoListener echo = new ReplEchoListener(repl);
+    it.addInputListener(echo);
+    repl.appendVerifyKeyListener(it);    
   }
-
 
   /* (non-Javadoc)
    * @see org.eclipse.ui.part.WorkbenchPart#setFocus()

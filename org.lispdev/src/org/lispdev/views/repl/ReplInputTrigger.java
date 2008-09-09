@@ -3,7 +3,7 @@
  */
 package org.lispdev.views.repl;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.VerifyEvent;
@@ -20,15 +20,19 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
     return repl;
   }
 
-  private List<IReplInputListener> listeners;
+  private ArrayList<IReplInputListener> listeners;
   
   public ReplInputTrigger(Repl r)
   {
     repl = r;
   }
   
-  public void registerInputListener(IReplInputListener rl)
+  public void addInputListener(IReplInputListener rl)
   {
+    if(listeners == null)
+    {
+      listeners = new ArrayList<IReplInputListener>();      
+    }
     listeners.add(rl);
   }
   
@@ -39,17 +43,53 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
       repl.logTrace("Input trigger has no listeners");
       return;
     }
-    PartitionData pd = repl.getPartitionAt(event.start);
+    int offset = repl.getTextWidget().getCaretOffset();
+    PartitionData pd = repl.getPartitionAt(offset);
     if( pd == null )
     {
-      repl.logErr("Partition data for event at "+String.valueOf(event.start)+" does not exist");
+      //repl.getTextWidget().
+      //repl.getTextWidget().getCaretOffset()
+      //repl.getTextWidget().print(printer, options)
+      //repl.getTextWidget().scroll(destX, destY, x, y, width, height, all)
+      //repl.getTextWidget().setCaretOffset(offset)
+      //repl.getTextWidget().setFont(font)
+      //repl.getTextWidget().setKeyBinding(key, action)
+      //repl.getTextWidget().setMenu(menu)
+      //repl.getTextWidget().setSelection(start, end)
+      //repl.getTextWidget().showSelection()
+      //repl.addTextInputListener(listener)
+      //repl.addTextListener(listener)
+      //repl.getUndoManager()
+      //repl.prependAutoEditStrategy(strategy, contentType)
+      //repl.prependVerifyKeyListener(listener)
+      //repl.getUndoManager().
+      //repl.revealRange(start, length)
+      //repl.setAutoIndentStrategy(strategy, contentType)
+      //repl.setTabsToSpacesConverter(converter)
+      //repl.setTextColor(color)
+      //repl.setTextColor(color, start, length, controlRedraw)
+      //repl.setUndoManager(undoManager)
+      //repl.CONTENTASSIST_CONTEXT_INFORMATION
+      //repl.CONTENTASSIST_PROPOSALS
+      //repl.DELETE
+      //repl.FORMAT
+      //repl.INFORMATION
+      //repl.PRINT
+      //repl.REDO
+      //repl.SELECT_ALL
+      //repl.SHIFT_LEFT
+      //repl.SHIFT_RIGHT
+      //repl.UNDO
+
+      repl.logErr("Partition data for event at "+String.valueOf(offset)
+          +" does not exist, although whole document supposed to be partitioned");
       return;
     }
     String msg = repl.getText(pd);
     String context = pd.context;
     for( IReplInputListener rl : listeners )
     {
-      rl.run(msg,context);
+      rl.run(msg,context,event);
     }
   }
   

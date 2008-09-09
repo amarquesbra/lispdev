@@ -9,10 +9,18 @@ import java.util.List;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextOperationTarget;
+import org.eclipse.jface.text.TextViewerUndoManager;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.widgets.Composite;
 
 /**
@@ -22,11 +30,11 @@ import org.eclipse.swt.widgets.Composite;
  */
 public class Repl extends SourceViewer
 {
-  private List<ILogListener> infoListeners;
-  private List<ILogListener> warnListeners;
-  private List<ILogListener> errListeners;
-  private List<ILogListener> traceListeners;
-  private List<ILogExceptionListener> eListeners;
+  private ArrayList<ILogListener> infoListeners;
+  private ArrayList<ILogListener> warnListeners;
+  private ArrayList<ILogListener> errListeners;
+  private ArrayList<ILogListener> traceListeners;
+  private ArrayList<ILogExceptionListener> eListeners;
   public boolean quietInfo = false;
   public boolean quietWarn = false;
   public boolean quietErr = false;
@@ -36,33 +44,41 @@ public class Repl extends SourceViewer
   private boolean inEditMode = false;
   private IDocument doc;
   private int editOffset; //editable part is after this offset
+  private final static String LAST_EDIT_CONTEXT = "__last_edit_context__";
   
   // it is going to grow in increasing order
   private List<PartitionData> partitionRegistry; 
+
+  final TextViewerUndoManager undoManager;
   
-  public void registerLogInfoListener(ILogListener log)
+  public void addLogInfoListener(ILogListener log)
   {
     logTrace("Added info listener:" + log.toString());
+    if(infoListeners == null) infoListeners = new ArrayList<ILogListener>();
     infoListeners.add(log);
   }
-  public void registerLogWarnListener(ILogListener log)
+  public void addLogWarnListener(ILogListener log)
   {
     logTrace("Added warn listener:" + log.toString());
+    if(warnListeners == null) warnListeners = new ArrayList<ILogListener>();
     warnListeners.add(log);
   }
-  public void registerLogErrListener(ILogListener log)
+  public void addLogErrListener(ILogListener log)
   {
     logTrace("Added err listener:" + log.toString());
+    if(errListeners == null) errListeners = new ArrayList<ILogListener>();
     errListeners.add(log);
   }
-  public void registerLogTraceListener(ILogListener log)
+  public void addLogTraceListener(ILogListener log)
   {
     logTrace("Added trace listener:" + log.toString());
+    if(traceListeners == null) traceListeners = new ArrayList<ILogListener>();
     traceListeners.add(log);
   }
-  public void registerLogExceptionListener(ILogExceptionListener log)
+  public void addLogExceptionListener(ILogExceptionListener log)
   {
     logTrace("Added exception listener:" + log.toString());
+    if(eListeners == null) eListeners = new ArrayList<ILogExceptionListener>();
     eListeners.add(log);
   }
   
@@ -185,20 +201,33 @@ public class Repl extends SourceViewer
     }
   }
   
+  private PartitionData generateLastEditPartition()
+  {
+    return new PartitionData(editOffset,doc.getLength()-editOffset,LAST_EDIT_CONTEXT);    
+  }
+  
   public PartitionData getPartitionAt(int offset)
   {
+    if( offset >= editOffset )
+    {
+      return generateLastEditPartition();
+    }
     if( partitionRegistry == null )
     {
       return null;
     }
-    int i = getPartitionPosition(offset,0,partitionRegistry.size());
+    logTrace("Finding partition for position "+String.valueOf(offset));
+    int i = getPartitionPosition(offset,0,partitionRegistry.size()-1);
     if( i < 0 )
     {
+      logTrace("Partition at position "+String.valueOf(offset)+" is not found");
       return null;
     }
     else
     {
-      return partitionRegistry.get(i);      
+      PartitionData pd = partitionRegistry.get(i);
+      logTrace("Found partition "+pd.context+" at position "+String.valueOf(i));
+      return pd;
     }
   }
 
@@ -229,6 +258,19 @@ public class Repl extends SourceViewer
   {
     return inEditMode;
   }
+  
+  private void undoDisconnect()
+  {
+    undoManager.reset();
+    undoManager.disconnect();
+  }
+  
+  private void undoConnect()
+  {
+    undoManager.connect(this);
+    undoManager.reset();
+    undoManager.setMaximalUndoLevel(1000); //FIXME: make this into option
+  }
 
   public Repl(Composite parent, IVerticalRuler ruler, int styles)
   {
@@ -243,33 +285,78 @@ public class Repl extends SourceViewer
     setDocument(doc, new AnnotationModel());
     showAnnotations(false);
     showAnnotationsOverview(false);
+    
+    
+    // undo manager
+    
+    undoManager = new TextViewerUndoManager(20000);
+    // add listeners
+    undoManager.connect(this);
+    setUndoManager(undoManager);
+
+    StyledText styledText = getTextWidget();
+    styledText.addVerifyListener(new VerifyListener(){
+        public void verifyText(VerifyEvent e){
+         undoManager.endCompoundChange();
+        }
+     });
+    
+    styledText.addKeyListener(new KeyListener() {
+     public void keyPressed(KeyEvent e) {
+      if (isUndoKeyPress(e)) {
+       doOperation(ITextOperationTarget.UNDO);
+      } else if (isRedoKeyPress(e)) {
+       doOperation(ITextOperationTarget.REDO);
+      }
+     }
+
+     private boolean isUndoKeyPress(KeyEvent e) {
+      // CTRL + z
+      return ((e.stateMask & SWT.CONTROL) > 0)
+        && ((e.keyCode == 'z') || (e.keyCode == 'Z'));
+     }
+
+     private boolean isRedoKeyPress(KeyEvent e) {
+      // CTRL + y
+      return ((e.stateMask & SWT.CONTROL) > 0)
+        && ((e.keyCode == 'y') || (e.keyCode == 'Y'));
+     }
+
+     public void keyReleased(KeyEvent e) {
+      // do nothing
+     }
+    });
+
   }
 
   // prints new line, prompt and then allow you edit repl
   public void startEdit(String prompt, String promptContext, StyleRange[] promptStyle)
   {
-    print("\n"+prompt,promptContext,promptStyle);
+    appendText("\n"+prompt,promptContext,promptStyle);
     logTrace("Start edit mode at offset = "+String.valueOf(editOffset)
         +", with prompt \""+prompt+"\", and context \""+promptContext+"\"");
+    undoConnect();
     inEditMode = true;
   }
   
   public void stopEdit()
   {
+    undoDisconnect();
+    partitionRegistry.add(generateLastEditPartition());
     inEditMode = false;
     editOffset = doc.getLength();
     logTrace("Stop edit mode at offset = "+String.valueOf(editOffset));
   }
   
   
-  public void print(String str, String context, StyleRange[] styles)
+  public void appendText(String str, String context, StyleRange[] styles)
   {
-    print(str, new PartitionData(0,str.length(),context,styles));
+    appendText(str, new PartitionData(0,str.length(),context,styles));
   }
   
   
   // this function is used to print to repl
-  public void print(String str, PartitionData data)
+  public void appendText(String str, PartitionData data)
   {
     if(doc != null)
     {
@@ -347,5 +434,5 @@ public class Repl extends SourceViewer
       logWarning("Tried to print to uninitialized Repl");
     }
   }
-  
+
 }
