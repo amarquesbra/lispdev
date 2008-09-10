@@ -33,7 +33,8 @@ public class ReplAutoEdit implements IAutoEditStrategy
     }
     if( c.offset < repl.getEditOffset() )
     {
-      repl.logTrace("Carret is in read-only region, moving to start of write region");
+      repl.logTrace("ReplAutoEdit.customizeDocumentCommand: " +
+      		"move carret from read-only to start of edit region",5);
       c.offset = repl.getEditOffset();
     }
   }

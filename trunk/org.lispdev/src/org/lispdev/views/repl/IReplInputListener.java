@@ -11,5 +11,5 @@ import org.eclipse.swt.events.VerifyEvent;
  */
 public interface IReplInputListener
 {
-  void run(String msg, String context,VerifyEvent event);
+  void run(String msg, PartitionData pd, VerifyEvent event);
 }

@@ -78,8 +78,9 @@ public class ReplView extends ViewPart
     repl.setEditable(true);
     repl.appendText("some text", null, 
         new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)});
-    repl.startEdit("Enter your command>", "this prompt",
-        new StyleRange[]{new StyleRange(0, "Enter your command>".length()+1,
+    String prompt = "\nEnter your command>";
+    repl.startEdit(prompt, "this prompt",
+        new StyleRange[]{new StyleRange(0, prompt.length(),
             null, null, SWT.BOLD)});
     ReplInputTrigger it = new ReplInputTrigger(repl){
       @Override
