@@ -8,6 +8,7 @@ import org.lispdev.views.repl.IReplInputListener;
 import org.lispdev.views.repl.PartitionData;
 import org.lispdev.views.repl.Repl;
 import org.lispdev.views.repl.ReplEchoListener;
+import org.lispdev.views.repl.ReplEnterTrigger;
 import org.lispdev.views.repl.ReplInputTrigger;
 
 import org.eclipse.jface.text.source.VerticalRuler;
@@ -75,24 +76,14 @@ public class ReplView extends ViewPart
     repl.getControl().setLayoutData(gd);
     //repl.getTextWidget().setFont(newFont);
 
-    repl.setEditable(true);
-    repl.appendText("some text", null, 
-        new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)});
-    String prompt = "\nEnter your command>";
-    repl.startEdit(prompt, "this prompt",
-        new StyleRange[]{new StyleRange(0, prompt.length(),
-            null, null, SWT.BOLD)});
-    ReplInputTrigger it = new ReplInputTrigger(repl){
-      @Override
-      protected boolean check(VerifyEvent event)
-      {
-        return (event.stateMask == SWT.NONE &&
-            (event.keyCode == '\r' || event.keyCode == '\n'));
-      }
-    };
+    ReplInputTrigger it = new ReplEnterTrigger(repl,SWT.NONE);
     ReplEchoListener echo = new ReplEchoListener(repl);
     it.addInputListener(echo);
-    repl.appendVerifyKeyListener(it);    
+    repl.appendVerifyKeyListener(it);
+    repl.startEdit("start>", "this prompt",0,
+        new StyleRange[]{new StyleRange(0, "start>".length(),
+            null, null, SWT.BOLD)});
+
   }
 
   /* (non-Javadoc)
