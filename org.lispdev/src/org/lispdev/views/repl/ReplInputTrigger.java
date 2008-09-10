@@ -40,7 +40,7 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
   {
     if( listeners == null )
     {
-      repl.logTrace("Input trigger has no listeners");
+      repl.logInfo("Input trigger has no listeners");
       return;
     }
     int offset = repl.getTextWidget().getCaretOffset();
@@ -86,10 +86,9 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
       return;
     }
     String msg = repl.getText(pd);
-    String context = pd.context;
     for( IReplInputListener rl : listeners )
     {
-      rl.run(msg,context,event);
+      rl.run(msg,pd,event);
     }
   }
   

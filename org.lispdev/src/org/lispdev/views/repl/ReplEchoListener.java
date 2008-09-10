@@ -20,25 +20,24 @@ public class ReplEchoListener implements IReplInputListener
   }
 
   /* (non-Javadoc)
-   * @see org.lispdev.views.repl.IReplInputListener#run(java.lang.String, java.lang.String)
+   * @see org.lispdev.views.repl.IReplInputListener
    */
-  public void run(String msg, String context, VerifyEvent e)
+  public void run(String msg, PartitionData pd, VerifyEvent e)
   {
     repl.stopEdit();
     e.doit = false;
-    String str = "\nPrinted: \""+msg+"\", in context: \""+context+"\"";
+    String str = "\nPrinted: \""+msg+"\", in context: \""+pd.context+"\"";
     StyleRange pr = new StyleRange();
     pr.start = 0;
     pr.length = "Printed: ".length();
     pr.fontStyle = SWT.BOLD;
     StyleRange cn = new StyleRange();
     cn.start = "Printed: \"".length()+msg.length()+"\", in ".length();
-    cn.length = "context:".length();
+    cn.length = "context: ".length();
     cn.fontStyle = SWT.BOLD;
     repl.appendText(str, 
         new PartitionData(0,str.length(),"echo_context",new StyleRange[]{pr,cn}));
-    repl.startEdit("Echo>", "echo_prompt", new StyleRange[]{new StyleRange(0,5,null,null,SWT.BOLD)});
-    repl.getTextWidget().setCaretOffset(repl.getDocument().getLength());
+    repl.startEdit("Echo>","echo_prompt",null,null,SWT.BOLD,true);
   }
   
 }
