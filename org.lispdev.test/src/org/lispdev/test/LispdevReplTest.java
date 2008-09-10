@@ -40,7 +40,7 @@ public class LispdevReplTest
   public void replPrint() throws PartInitException
   {
     ReplView view = (ReplView)getPage().showView(ReplView.ID);
-    view.repl.print("some text", "some context", 
+    view.repl.appendText("some text", "some context", 1,
         new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)});
   }
   
