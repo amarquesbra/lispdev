@@ -353,13 +353,14 @@ public class Repl extends ProjectionViewer
    * @param prompt - prompt string. 
    * If you want it to be on new line precede with "\n"
    * @param promptContext - string identifying prompt context
+   * @param id - number that can be used to identify this particular prompt
    * @param promptStyle - style ranges specifying how prompt should be printed
    * 
    * @notes  After calling this function don't forget to move
    * caret to end of document by calling:
    * repl.getTextWidget().setCaretOffset(repl.getDocument().getLength());
    */
-  public void startEdit(String prompt, String promptContext,
+  public void startEdit(String prompt, String promptContext, int id,
       StyleRange[] promptStyle)
   {
     logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
@@ -369,11 +370,11 @@ public class Repl extends ProjectionViewer
       logTrace("startEdit: called in edit mode",7);
       stopEdit();
     }
-    appendText(prompt, promptContext, promptStyle);
+    appendText(prompt, promptContext, id, promptStyle);
     connectUndoManager();
     inEditMode = true;
     editPartition = new PartitionData(editOffset,0,
-        promptContext+"."+EDIT_CONTEXT);
+        promptContext+"."+EDIT_CONTEXT,id);
     logTrace("startEdit: Start edit mode at offset = " + String.valueOf(editOffset)
         + ", with prompt \"" + prompt + "\", and context \"" + promptContext
         + "\"",4);
@@ -389,13 +390,14 @@ public class Repl extends ProjectionViewer
    * 
    * @param prompt - text to print
    * @param promptContext - context for the prompt
+   * @param id - numeric identifier of the prompt
    * @param foreground - foreground color, <code>null</code> if none
    * @param background - background color, <code>null</code> if none
    * @param fontStyle - font style of the style, may be 
    * <code>SWT.NORMAL</code>, <code>SWT.ITALIC</code> or <code>SWT.BOLD</code>
    * @param onNewLine - if true, prompt is printed on new line
    */
-  public void startEdit(String prompt, String promptContext,
+  public void startEdit(String prompt, String promptContext, int id,
       Color foreground, Color background, int fontStyle, boolean onNewLine)
   {
     logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
@@ -406,7 +408,7 @@ public class Repl extends ProjectionViewer
     {
       pr = "\n"+pr;
     }
-    startEdit(pr,promptContext,
+    startEdit(pr,promptContext, id,
         new StyleRange[]{new StyleRange(0,pr.length(),foreground,
             background,fontStyle)});
     getTextWidget().setCaretOffset(getDocument().getLength());
@@ -528,13 +530,14 @@ public class Repl extends ProjectionViewer
    * <code>styles</code>
    * @param str - text to append
    * @param context - context for appended text
+   * @param id - id for appended text
    * @param styles - styles to format the text. Can be <code>null</code>
    */
-  public void appendText(String str, String context, StyleRange[] styles)
+  public void appendText(String str, String context, int id, StyleRange[] styles)
   {
     logTraceEntry("appendText","\""+str+"\",\""+context+"\","
         +String.valueOf(styles),7);
-    appendText(str, new PartitionData(0, str.length(), context, styles));
+    appendText(str, new PartitionData(0, str.length(), context, id, styles));
     logTraceReturn("appendText","",7);
   }
 
@@ -544,7 +547,7 @@ public class Repl extends ProjectionViewer
    * Otherwise returns <code>null</code>
    * @param offset - checks for read-only partition here
    */
-  private PartitionData getReadOnlyPartition(int offset)
+  public PartitionData getReadOnlyPartition(int offset)
   {
     if( offset < editOffset )
     {
@@ -624,6 +627,10 @@ public class Repl extends ProjectionViewer
     Position pos = new Position(insoffset,txt.length());
     try
     {
+      if( !doc.containsPositionCategory(READ_ONLY_CATEGORY) )
+      {
+        doc.addPositionCategory(READ_ONLY_CATEGORY);          
+      }
       doc.addPosition(READ_ONLY_CATEGORY, pos);
     }
     catch(BadLocationException e)

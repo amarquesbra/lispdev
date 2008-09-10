@@ -16,6 +16,7 @@ public class PartitionData
   public int start;
   public int length;
   public String context;
+  public int id;
   public StyleRange[] originalStyle;
   public StyleRange[] mouseOverStyle;
   public StyleRange[] mouseOverCtrlStyle;
@@ -27,23 +28,24 @@ public class PartitionData
   public IMouseAction actionOverCtrl;
   public ArrayList<PartitionData> children;
 
-  public PartitionData(int start, int length, String context)
+  public PartitionData(int start, int length, String context, int id)
   {
-    this(start, length, context, null, null, null, null, null, null, null,
-        null, null);
+    this(start, length, context, id, null, null, null, null, null, null,
+        null, null, null);
   }
 
-  public PartitionData(int start, int length, String context,
+  public PartitionData(int start, int length, String context, int id,
       StyleRange[] originalStyle)
   {
-    this(start, length, context, originalStyle, null, null, null, null, null,
-        null, null, null);
+    this(start, length, context, id, originalStyle, null, null, null, null,
+        null, null, null, null);
   }
 
   /**
    * @param start all style and children data is relative this this start
    * @param length
    * @param context
+   * @param id
    * @param originalStyle
    * @param mouseOverStyle
    * @param mouseOverCtrlStyle
@@ -54,7 +56,7 @@ public class PartitionData
    * @param actionOver
    * @param actionOverCtrl
    */
-  public PartitionData(int start, int length, String context,
+  public PartitionData(int start, int length, String context, int id,
       StyleRange[] originalStyle, StyleRange[] mouseOverStyle,
       StyleRange[] mouseOverCtrlStyle, IMouseAction actionClick,
       IMouseAction actionRightClick, IMouseAction actionCtrlClick,
@@ -64,6 +66,7 @@ public class PartitionData
     this.start = start;
     this.length = length;
     this.context = context;
+    this.id = id;
     this.originalStyle = originalStyle;
     this.mouseOverStyle = mouseOverStyle;
     this.mouseOverCtrlStyle = mouseOverCtrlStyle;
@@ -78,8 +81,23 @@ public class PartitionData
   
   public PartitionData clone()
   {
-    PartitionData pd = new PartitionData(start,length,context,
-        originalStyle.clone(),mouseOverStyle.clone(),mouseOverCtrlStyle.clone(),
+    StyleRange[] new_originalStyle = null;
+    if( originalStyle != null )
+    {
+      new_originalStyle = originalStyle.clone();
+    }
+    StyleRange[] new_mouseOverStyle = null;
+    if( mouseOverStyle != null )
+    {
+      new_mouseOverStyle = mouseOverStyle.clone();
+    }
+    StyleRange[] new_mouseOverCtrlStyle = null;
+    if( mouseOverCtrlStyle != null )
+    {
+      new_mouseOverCtrlStyle = mouseOverCtrlStyle.clone();
+    }
+    PartitionData pd = new PartitionData(start,length,context,id,
+        new_originalStyle,new_mouseOverStyle,new_mouseOverCtrlStyle,
         actionClick,actionRightClick,actionCtrlClick,actionCtrlRightClick,
         actionOver,actionOverCtrl);
     if( children != null )
@@ -95,7 +113,7 @@ public class PartitionData
   
   public String toString()
   {
-    String res = "{"+context+","
+    String res = "{"+context+","+String.valueOf(id)+","
     +String.valueOf(start)+","+String.valueOf(length)+"}";
     return res;
   }

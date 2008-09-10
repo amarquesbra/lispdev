@@ -22,9 +22,9 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
 
   private ArrayList<IReplInputListener> listeners;
   
-  public ReplInputTrigger(Repl r)
+  public ReplInputTrigger(Repl repl)
   {
-    repl = r;
+    this.repl = repl;
   }
   
   public void addInputListener(IReplInputListener rl)
@@ -88,7 +88,7 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
     String msg = repl.getText(pd);
     for( IReplInputListener rl : listeners )
     {
-      rl.run(msg,pd,event);
+      rl.run(msg,offset,pd,event);
     }
   }
   

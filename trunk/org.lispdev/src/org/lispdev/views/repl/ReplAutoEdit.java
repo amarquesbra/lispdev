@@ -37,6 +37,14 @@ public class ReplAutoEdit implements IAutoEditStrategy
       		"move carret from read-only to start of edit region",5);
       c.offset = repl.getEditOffset();
     }
+    else
+    {
+      PartitionData pd = repl.getReadOnlyPartition(c.offset); 
+      if( pd != null )
+      {
+        c.offset = repl.getEditOffset() + pd.start + pd.length;
+      }
+    }
   }
 
 }
