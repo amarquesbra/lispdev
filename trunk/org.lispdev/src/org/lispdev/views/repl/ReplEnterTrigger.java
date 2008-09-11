@@ -19,9 +19,9 @@ public class ReplEnterTrigger extends ReplInputTrigger
    * SWT.ALT, SWT.CTRL, SWT.SHIFT (combination performed using |, example:
    * SWT.ALT | SWT.CTRL
    */
-  public ReplEnterTrigger(Repl repl, int stateMask)
+  public ReplEnterTrigger(Repl repl, int stateMask, int partitionResolutionFlag)
   {
-    super(repl);
+    super(repl,partitionResolutionFlag);
     this.stateMask = stateMask;
   }
 

@@ -15,6 +15,7 @@ import org.eclipse.swt.events.VerifyEvent;
 public abstract class ReplInputTrigger implements VerifyKeyListener
 {
   private Repl repl;
+  private int partitionResolutionFlag;
   protected Repl getRepl()
   {
     return repl;
@@ -22,9 +23,10 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
 
   private ArrayList<IReplInputListener> listeners;
   
-  public ReplInputTrigger(Repl repl)
+  public ReplInputTrigger(Repl repl, int partitionResolutionFlag)
   {
     this.repl = repl;
+    this.partitionResolutionFlag = partitionResolutionFlag;
   }
   
   public void addInputListener(IReplInputListener rl)
@@ -44,7 +46,8 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
       return;
     }
     int offset = repl.getTextWidget().getCaretOffset();
-    PartitionData pd = repl.getPartitionAt(offset);
+    PartitionData pd = repl.getPartitionAt(offset,partitionResolutionFlag);
+    
     if( pd == null )
     {
       //repl.getTextWidget().
