@@ -48,8 +48,7 @@ public class LispdevDebug
         0, message, e));
   }
 
-  // FIXME:
-  // tried to get shell by
+  // FIXME: tried to get shell by
   // PlatformUI.getWorkbench().getDisplay().getActiveShell()
   // and this didn't work, I am not sure if it will work with other shells
   public static void showError(Shell shell, String message, CoreException e,

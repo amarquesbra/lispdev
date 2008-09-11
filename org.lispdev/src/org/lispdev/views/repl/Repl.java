@@ -10,6 +10,7 @@ import java.util.List;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.BadPositionCategoryException;
+import org.eclipse.jface.text.DefaultPositionUpdater;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextOperationTarget;
@@ -62,6 +63,14 @@ public class Repl extends ProjectionViewer
    * Last edit context = Last prompt context + "." + this string
    */
   private final static String EDIT_CONTEXT = "_edit_context__";
+  /**
+   * Dummy new line context
+   */
+  private final static String NEW_LINE_CONTEXT = "_new_line_context__";
+  /**
+   * Null context (when data is not given)
+   */
+  private final static String NULL_CONTEXT = "_null_context__";
 
   /**
    * Registry that holds top level partitions.
@@ -107,13 +116,20 @@ public class Repl extends ProjectionViewer
    * (and including) <code>from</code> and <code>to</code>.
    * 
    * @note This is a helper function for recursive algorithm in public function
-   *       <code>generateLastEditPartition</code>. The following algorithm is
+   *       <code>getPartitionPosition</code>. The following algorithm is
    *       used (where <code>offset[i]</code> - is offset of 
    *       <code>i</code>'th partition):<br>
    *       - Ensure that <code>offset[from] < offset < offset[to]</code><br>
    *       - If <code>to == from + 1</code> return <code>from</code><br>
+   *       - Define <code>midOffset = offset[(from + to)/2]</code><br>
+   *       - If <code>offset == midOffset</code><br>
+   *           - if <code>partitionResolutionFlag == NONE</code> return -1
+   *           - if <code>partitionResolutionFlag == AFTER</code> 
+   *             return (from + to)/2
+   *           - else (when <code>partitionResolutionFlag == BEFORE</code>)
+   *             return (from + to)/2 - 1
    *       - If <code>offset > offset[(from + to)/2]</code>, set 
-   *       <code>from = (from + to)/2</code>,<br>
+   *         <code>from = (from + to)/2</code>,<br>
    *       - otherwise set <code>to = (from + to)/2</code>
    * 
    * @param offset -
@@ -125,11 +141,13 @@ public class Repl extends ProjectionViewer
    * @return -1 if no <code>partition</code> found, or index in
    *         <code>partitionRegistry</code> otherwise
    */
-  private int getPartitionPosition(int offset, int from, int to)
+  private int getPartitionPosition(int offset, int from, int to,
+      int partitionResolutionFlag)
   {
     if(doc == null || offset < 0 || offset > doc.getLength())
       return -1;
 
+    // process boundary cases
     if(partitionRegistry == null || partitionRegistry.get(from).start > offset
         || partitionRegistry.get(to).start < offset)
     {
@@ -137,37 +155,115 @@ public class Repl extends ProjectionViewer
     }
 
     if(partitionRegistry.get(from).start == offset)
-      return from;
-
+    {
+      return resolveBoundary(from,partitionResolutionFlag);
+    }
+    
     if(partitionRegistry.get(to).start == offset)
-      return to;
+    {
+      return resolveBoundary(to,partitionResolutionFlag);
+    }
 
+    // we now know that offset[from] < offset < offset[to]
     if(from + 1 == to)
     {
       return from;
     }
 
     int inew = (from + to) / 2;
-    if(offset >= partitionRegistry.get(inew).start)
+    int midOffset = partitionRegistry.get(inew).start;
+    if(offset == midOffset)
     {
-      return getPartitionPosition(offset, inew, to);
+      return resolveBoundary(inew,partitionResolutionFlag);      
+    }
+    if(offset > partitionRegistry.get(inew).start)
+    {
+      return getPartitionPosition(offset, inew, to,
+          partitionResolutionFlag);
     }
     else
     {
-      return getPartitionPosition(offset, from, inew);
+      return getPartitionPosition(offset, from, inew,
+          partitionResolutionFlag);
+    }
+  }
+
+  private int resolveBoundary(int i, int partitionResolutionFlag)
+  {
+    if( partitionResolutionFlag == NONE )
+    {
+      return -1;
+    }
+    if( partitionResolutionFlag == BEFORE )
+    {
+      if( i > 0 )
+      {
+        return i - 1;
+      }
+      else
+      {
+        return -1;
+      }
+    }
+    //if( partitionResolutionFlag == AFTER )
+    {
+      return i;
     }
   }
   
   /**
-   * @return partition containing <code>offset</code>
+   * Partition resolution flag signaling that if offset falls
+   * between partitions, return null
    */
-  public PartitionData getPartitionAt(int offset)
+  static final public int NONE = 0;
+  /**
+   * Partition resolution flag signaling that if offset falls
+   * between partitions, return the one that is before offset, or null if offset
+   * corresponds to the beginning of the document
+   */
+  static final public int BEFORE = 1;
+  /**
+   * Partition resolution flag signaling that if offset falls
+   * between partitions, return the one that is after offset, or null if offset
+   * corresponds to the end of the document
+   */
+  static final public int AFTER = 2;
+  
+  /**
+   * @return partition containing <code>offset</code>. When <code>offset</code>
+   * falls right between two partition <code>partitionResolutionFlag</code>
+   * is used: 
+   * BEFORE - returns partition before offset, 
+   * or null if in the beginning of document
+   * AFTER - returns partition after offset, or null if in the end of document
+   * NONE - returns null
+   */
+  public PartitionData getPartitionAt(int offset, int partitionResolutionFlag)
   {
     logTraceEntry("getPartitionAt",String.valueOf(offset),5);
     PartitionData res;
-    if(offset >= editOffset)
+    // first check boundary conditions
+    if( (partitionResolutionFlag == BEFORE || partitionResolutionFlag == NONE) &&
+        0 == offset )
+    {
+      res = null;
+    }
+    else if( (partitionResolutionFlag == AFTER || partitionResolutionFlag == NONE) &&
+        doc.getLength() == offset )
+    {
+      res = null;
+    }
+    else if(offset > editOffset)
     {
       logTrace("getPartitionAt: editPartition",7);
+      res = getCurrentEditPartition();
+    }
+    else if( offset == editOffset && partitionResolutionFlag == NONE )
+    {
+      res = null;
+    }
+    else if ( offset == editOffset && partitionResolutionFlag == AFTER )
+    {
       res = getCurrentEditPartition();
     }
     else if(partitionRegistry == null)
@@ -175,9 +271,12 @@ public class Repl extends ProjectionViewer
       logWarning("getPartitionAt: empty registry");
       res = null;
     }
+    // now we sure that 0 < offset < editOffset (in case of NONE and AFTER)
+    // and 0 < offset <= editOffset (in case of BEFORE)
     else
     {
-      int i = getPartitionPosition(offset, 0, partitionRegistry.size() - 1);
+      int i = getPartitionPosition(offset, 0, partitionRegistry.size() - 1,
+          partitionResolutionFlag);
       if(i < 0)
       {
         logWarning("getPartitionAt: no partition at "+ String.valueOf(offset));
@@ -202,6 +301,14 @@ public class Repl extends ProjectionViewer
     if( inEditMode )
     {
       editPartition.length = doc.getLength() - editOffset;
+      if( editPartition.children != null )
+      {
+        for( PartitionData pdc : editPartition.children )
+        {
+          Position pos = readOnlyPositions.get(pdc);
+          pdc.start = pos.getOffset() - editOffset;
+        }
+      }
       return editPartition;
     }
     else
@@ -290,7 +397,8 @@ public class Repl extends ProjectionViewer
     readOnlyPositions = new HashMap<PartitionData,Position>();
     undoManager = new TextViewerUndoManager(MAX_UNDO);
     iniUndoManager();
-
+    doc.addPositionUpdater(new DefaultPositionUpdater(READ_ONLY_CATEGORY));
+    appendVerifyKeyListener(new ReadOnlyBackspaceDel(this));
   }
 
   /**
@@ -355,13 +463,14 @@ public class Repl extends ProjectionViewer
    * @param promptContext - string identifying prompt context
    * @param id - number that can be used to identify this particular prompt
    * @param promptStyle - style ranges specifying how prompt should be printed
+   * @param onNewLine - if true starts prompt on new line
    * 
    * @notes  After calling this function don't forget to move
    * caret to end of document by calling:
    * repl.getTextWidget().setCaretOffset(repl.getDocument().getLength());
    */
   public void startEdit(String prompt, String promptContext, int id,
-      StyleRange[] promptStyle)
+      StyleRange[] promptStyle, boolean onNewLine)
   {
     logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
         +"\","+String.valueOf(promptStyle),7);
@@ -370,7 +479,7 @@ public class Repl extends ProjectionViewer
       logTrace("startEdit: called in edit mode",7);
       stopEdit();
     }
-    appendText(prompt, promptContext, id, promptStyle);
+    appendText(prompt, promptContext, id, promptStyle, onNewLine);
     connectUndoManager();
     inEditMode = true;
     editPartition = new PartitionData(editOffset,0,
@@ -404,13 +513,9 @@ public class Repl extends ProjectionViewer
         +"\","+String.valueOf(foreground)+","+String.valueOf(background)
         +","+String.valueOf(fontStyle)+","+String.valueOf(onNewLine),5);
     String pr = prompt;
-    if(onNewLine)
-    {
-      pr = "\n"+pr;
-    }
     startEdit(pr,promptContext, id,
         new StyleRange[]{new StyleRange(0,pr.length(),foreground,
-            background,fontStyle)});
+            background,fontStyle)},onNewLine);
     getTextWidget().setCaretOffset(getDocument().getLength());
     logTraceEntry("startEdit","",7);
   }
@@ -427,7 +532,7 @@ public class Repl extends ProjectionViewer
       {
         if( doc.containsPositionCategory(READ_ONLY_CATEGORY) )
         {
-          doc.removePositionCategory(READ_ONLY_CATEGORY);          
+          doc.removePositionCategory(READ_ONLY_CATEGORY);
         }
       }
       catch(BadPositionCategoryException e)
@@ -449,6 +554,12 @@ public class Repl extends ProjectionViewer
     logTraceReturn("stopEdit","",7);
   }
   
+  /**
+   * Applies styles from <code>PartitionData</code>, assuming
+   * that PartitionData is set relative to 
+   * @param offset
+   * @param pd
+   */
   private void applyPartitionStyles(int offset, PartitionData pd)
   {
     if(doc == null || pd == null || pd.originalStyle == null 
@@ -475,9 +586,10 @@ public class Repl extends ProjectionViewer
   /**
    * Appends text and partition to repl.
    */
-  public void appendText(String str, PartitionData data)
+  public void appendText(String str, PartitionData data, boolean onNewLine)
   {
-    logTraceEntry("appendText","\""+str+"\","+String.valueOf(data),7);
+    logTraceEntry("appendText","\""+str+"\","+String.valueOf(data)
+        +","+String.valueOf(onNewLine),7);
     stopEdit();
     if(doc != null)
     {
@@ -487,10 +599,6 @@ public class Repl extends ProjectionViewer
         traceMsg = "appendText: at offset = " + String.valueOf(doc.getLength());
       }
       int offset = doc.getLength();
-      if(data != null)
-      {
-        data.start = offset;
-      }
       try
       {
         if(!quietTrace)
@@ -505,10 +613,28 @@ public class Repl extends ProjectionViewer
             traceMsg += ", printing \"" + str + "\"";
           }
         }
+        if( onNewLine )
+        {
+          PartitionData pd = new PartitionData(offset,"\n".length(),
+              NEW_LINE_CONTEXT,0);
+          partitionRegistry.add(pd);
+          doc.replace(offset, 0, "\n");
+          ++offset;
+        }
+        PartitionData pd;
+        if(data == null)
+        {
+          pd = new PartitionData(offset,str.length(), NULL_CONTEXT,0);
+        }
+        else
+        {
+          pd = data;
+          pd.start = offset;
+        }
         doc.replace(offset, 0, str);
-        partitionRegistry.add(data);
+        partitionRegistry.add(pd);
         editOffset = doc.getLength();
-        applyPartitionStyles(0,data);
+        applyPartitionStyles(0,pd);
       }
       catch(BadLocationException e)
       {
@@ -532,12 +658,15 @@ public class Repl extends ProjectionViewer
    * @param context - context for appended text
    * @param id - id for appended text
    * @param styles - styles to format the text. Can be <code>null</code>
+   * @param onNewLine - if true starts prompt on new line
    */
-  public void appendText(String str, String context, int id, StyleRange[] styles)
+  public void appendText(String str, String context, int id,
+      StyleRange[] styles, boolean onNewLine)
   {
     logTraceEntry("appendText","\""+str+"\",\""+context+"\","
         +String.valueOf(styles),7);
-    appendText(str, new PartitionData(0, str.length(), context, id, styles));
+    appendText(str, new PartitionData(0, str.length(), context, id, styles),
+        onNewLine);
     logTraceReturn("appendText","",7);
   }
 
@@ -546,8 +675,10 @@ public class Repl extends ProjectionViewer
    * partition of current edit region, returns that partition.
    * Otherwise returns <code>null</code>
    * @param offset - checks for read-only partition here
+   * @param partitionResolutionFlag - NONE, BEFORE, AFTER
    */
-  public PartitionData getReadOnlyPartition(int offset)
+  public PartitionData getReadOnlyPartition(int offset, 
+      int partitionResolutionFlag)
   {
     if( offset < editOffset )
     {
@@ -562,9 +693,42 @@ public class Repl extends ProjectionViewer
     {
       Position pos = readOnlyPositions.get(pdc);
       Assert.isTrue(pos != null && !pos.isDeleted());
-      if( pos.includes(offset) )
+      int offset0 = pos.getOffset();
+      int offset1 = offset0 + pos.getLength();
+      if( partitionResolutionFlag == NONE )
       {
-        return pdc;
+        if(offset0 == offset || offset1 == offset)
+        {
+          return null;            
+        }
+        else if( offset0 < offset && offset < offset1 )
+        {
+          pdc.start = offset0 - editOffset;
+          return pdc; 
+        }
+      }
+      if( partitionResolutionFlag == BEFORE )
+      {
+        if( offset0 == offset )
+        {
+          return null;
+        } else if( offset0 < offset && offset <= offset1 )
+        {
+          pdc.start = offset0 - editOffset;
+          return pdc;
+        }
+      }
+      if( partitionResolutionFlag == AFTER )
+      {
+        if( offset1 == offset )
+        {
+          return null;
+        }
+        else if(offset0 <= offset && offset < offset1 )
+        {
+          pdc.start = offset0 - editOffset;
+          return pdc;
+        }
       }
     }
     return null;
@@ -595,7 +759,7 @@ public class Repl extends ProjectionViewer
     }
     else
     {
-      PartitionData pdAtOffset = getReadOnlyPartition(insoffset);
+      PartitionData pdAtOffset = getReadOnlyPartition(insoffset,NONE);
       if( pdAtOffset != null )
       {
         Position pos = readOnlyPositions.get(pdAtOffset);
@@ -610,13 +774,14 @@ public class Repl extends ProjectionViewer
     catch(BadLocationException e)
     {
       logException("insertPartInEdit: could not insert text",e);
+      return;
     }
     //create new partition: cloning, since we don't want to conflict with
     //existing one when updating offsets
     PartitionData pdnew = pd.clone();
     pdnew.start = insoffset - editOffset; //relative to start of editRegion
     //apply styles
-    applyPartitionStyles(editOffset,pd);
+    applyPartitionStyles(editOffset,pdnew);
     //add the partition to children
     if( editPartition.children == null )
     {
@@ -643,6 +808,38 @@ public class Repl extends ProjectionViewer
     }
     //finally connect markers with partition through HashMap
     readOnlyPositions.put(pdnew, pos);
+    getTextWidget().setCaretOffset(insoffset+pdnew.length);
+  }
+  
+  public void deletePartInEdit(PartitionData pd)
+  {
+    if( !inEditMode || pd == null || !readOnlyPositions.containsKey(pd)
+        || editPartition.children == null 
+        || !editPartition.children.contains(pd))
+    {
+      return;
+    }
+    
+    Position pos = readOnlyPositions.get(pd);
+    try
+    {
+      doc.removePosition(READ_ONLY_CATEGORY, pos);
+    }
+    catch(BadPositionCategoryException e)
+    {
+      logException("deletePartInEdit: could not delete position",e);
+    }
+    readOnlyPositions.remove(pd);
+    try
+    {
+      doc.replace(pos.getOffset(), pd.length, "");
+    }
+    catch(BadLocationException e)
+    {
+      logException("deletePartInEdit: could not delete text",e);
+      e.printStackTrace();
+    }
+    editPartition.children.remove(pd);
   }
   
   /*

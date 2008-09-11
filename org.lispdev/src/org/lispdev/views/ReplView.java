@@ -76,13 +76,13 @@ public class ReplView extends ViewPart
     repl.getControl().setLayoutData(gd);
     //repl.getTextWidget().setFont(newFont);
 
-    ReplInputTrigger it = new ReplEnterTrigger(repl,SWT.NONE);
+    ReplInputTrigger it = new ReplEnterTrigger(repl,SWT.NONE,Repl.BEFORE);
     ReplEchoListener echo = new ReplEchoListener(repl);
     it.addInputListener(echo);
     repl.appendVerifyKeyListener(it);
     repl.startEdit("start>", "this prompt",0,
         new StyleRange[]{new StyleRange(0, "start>".length(),
-            null, null, SWT.BOLD)});
+            null, null, SWT.BOLD)},false);
 
   }
 

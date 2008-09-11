@@ -39,7 +39,8 @@ public class ReplAutoEdit implements IAutoEditStrategy
     }
     else
     {
-      PartitionData pd = repl.getReadOnlyPartition(c.offset); 
+      //FIXME: add delete and backspace keytrigger and process readonly parts
+      PartitionData pd = repl.getReadOnlyPartition(c.offset,Repl.NONE); 
       if( pd != null )
       {
         c.offset = repl.getEditOffset() + pd.start + pd.length;
