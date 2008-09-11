@@ -41,7 +41,7 @@ public class LispdevReplTest
   {
     ReplView view = (ReplView)getPage().showView(ReplView.ID);
     view.repl.appendText("some text", "some context", 1,
-        new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)});
+        new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)},true);
   }
   
 }
