@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Lisp Programming with Cusp - Big Projects</title>
+        <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+
+<h3><a href="index.html">Lisp Programming with Cusp</a> - Big Projects</h3>
+
+  <ul>
+  <li /><span class="url-link"><a href="#advancedNavigation">Advanced Navigation Features</a></span>
+  <li /><span class="url-link"><a href="#addingFiles">Adding Files to the Project</a></span>
+  </ul>
+
+<a name="advancedNavigation"></a><h4>Advanced Navigation Features</h4>
+There are several features in Cusp that help in working with big Lisp projects.<br />
+<ul><li /><b>Task list</b>: You can automatically add task by putting 'TODO:' in ';' comment:<br />
+</ul>
+<img src="files/fig23.png" alt="" border="0" /><br />
+<ul><li /><b>Sections</b>: You can divide your code into sections by using comments that start with <tt>;;;;&lt;</tt>:<pre>;;;;&lt;Section name&gt; description</pre></ul>
+Then a section can be folded in the editor and you can quickly navigate between sections using Outline:<br />
+<br />
+<img src="files/fig24.png" alt="" border="0" /><br />
+<ul><li /><b>Bookmarks</b>: Cusp supports regular bookmarking facility of Eclipse. Read Eclipse manual on bookmarks.<br />
+<li /><b>KeyBindings</b>: Navigational (and other) operations in Eclipse can be performed using a key combination. To see and customize key settings, go to Window-&gt;Preferences-&gt;General-&gt;Keys<br />
+</ul>
+<a name="addingFiles"></a><h4>Adding Files to the Project</h4>
+To add another file to the project you have two options:
+<ul>
+<li />Create new file from Eclipse: <b>Right-Click</b> on the project in Lisp Navigator and in context menu select <b>New-&gt;Lisp File</b> <br />
+</ul>
+<img src="files/fig25.png" alt="" border="0" /><br />
+<br />
+This opens dialog box, where you can select name of new file. Hitting <b>Finish</b> will create new file.
+<ul><li />Also, you can just copy file to the folder and <b>Refresh Project</b> : Right-Click on the project in Lisp Navigator and in context menu select <b>Refresh</b><br />
+</ul>
+Then you need to do two more things:<ul>- put correct <b>in-package</b> statement at the top of the file<br />
+- add code <tt>(:file "file-name" :depends-on ("defpackage"))</tt> to <tt>:components</tt> clause of .asd file:<br />
+</ul>
+<img src="files/fig26.png" alt="" border="0" /><br />
+<br />
+
+<span class="url-link"><a href="index.html">Back to table of contents</a></span>
+
+</body>
+</html>

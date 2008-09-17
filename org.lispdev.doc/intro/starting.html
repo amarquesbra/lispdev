@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Lisp Programming with Cusp - Getting Started</title>
+        <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+
+<h3><a href="index.html">Lisp Programming with Cusp</a> - Getting Started: Your First Lisp Program</h3>
+
+<ul>
+  <li /><span class="url-link"><a href="#createProject">Creating Lisp Project</a></span>
+  <li /><span class="url-link"><a href="#writingCode">Writing Code and Basic Navigation</a></span>
+  <li /><span class="url-link"><a href="#quitStart">Quitting And Restarting</a></span>
+</ul>
+
+<a name="createProject"></a><h4>Creating Lisp Project</h4>
+<ul>
+<li />Start Eclipse.
+<li />Go to Window &gt; Open Perspective &gt; Other...<br />
+<img src="files/fig1.png" alt="" border="0" /><br /><br />
+<li />Choose Lisp. You'll need to wait while Cusp starts and connects to lisp process. The first time Cusp starts it compiles code that connects to Lisp, and it might take couple minutes on slow machines, so be patient. Next time you'll start Cusp, it will load Lisp and connect to it much quicker.<br />
+<img src="files/fig2.png" alt="" border="0" /><br /><br />
+<li />Start new <span class="todo">project: File &gt; New &gt; Lisp Project</span><br />
+<img src="files/fig3.png" alt="" border="0" /><br /><br />
+<li />In New Lisp Project dialog box don't change anything and just hit Finish.<br />
+<img src="files/fig4.png" alt="" border="0" /><br /><br />
+<li />Project wizard will create three files: new-lisp1.asd, main.lisp, defpackage.lisp<br />
+- new-lisp1.asd - it is a sort of make file for your program, we'll look at it later<br />
+- defpackage.lisp - it is a sort of header file, here you declare functions and other symbols that are exported from the package<br />
+- main.lisp - this file will hold your code<br />
+<li />Once project is created it will be automatically compiled and loaded. We'll discuss later what this mean.<br />
+</ul>
+<a name="writingCode"></a><h4>Writing Code and Basic Navigation</h4>
+</a>Open file main.lisp and after <tt>(in-package :new-lisp1)</tt> write the following code: <pre>(defun f () "hello, world!")</pre><img src="files/fig5.png" alt="" border="0" /><br />
+<br />
+Save the file. As file is saved your new code is immidiately compiled. You can check this by typing in lower part of REPL <tt>(new-lisp1::f)</tt> and hitting <b>Enter</b> key or pressing <b>Send</b> button:<br />
+<br />
+<img src="files/fig6.png" alt="" border="0" /><br />
+<br />
+The result is displayed in upper part of REPL:<br />
+<br />
+<img src="files/fig7.png" alt="" border="0" /><br />
+<br />
+To export the function <tt>f</tt> from the package <tt>new-lisp1</tt> do the following (these operations are overkill for such a short source code, but they show important navigation features of Cusp IDE):<ul><li />Select <tt>in-package :new-lisp1</tt> in outline window to jump to the location of this statement in the code.<br />
+</ul>
+<img src="files/fig8.png" alt="" border="0" /><br />
+<ul><li /><b>Ctrl+Click</b> on <tt>:new-lisp1</tt> to find location where this symbol is defined. <br />
+</ul>
+<img src="files/fig8a.png" alt="" border="0" />    <br />
+<ul><li />This operation brings up dialog box <b>Definitions</b>. Select <tt>(DEFPACKAGE :NEW-LISP1)</tt> and hit <b>OK</b>:<br />
+</ul>
+<img src="files/fig9.png" alt="" border="0" />    <br />
+<ul><li />The previous operation will bring up the file defpackage.lisp. Type <tt>f</tt> in <tt>:export</tt> and save file:<br />
+</ul>
+<img src="files/fig10.png" alt="" border="0" /><br />
+<ul><li />Now the function <tt>f</tt> is exported from the package <tt>new-lisp1</tt> which can be checked by typing <tt>(new-lisp1:f)</tt> in REPL (note single <tt>:</tt> instead of double <tt>::</tt> in previous test, which signifies the fact that we just called a symbol exported from the package).<br />
+<li />To get back to the definition of function <tt>f</tt> just type <b>Alt-BackArrow</b> <b>Alt-BackArrow</b> or use navigation buttons on main toolbar:<br />
+</ul>
+<img src="files/fig11.png" alt="" border="0" />   <br />
+<br />
+<a name="quitStart"></a><h4>Quitting And Restarting</h4>
+<br />
+Once you tired of coding you will want to close Eclipse. Go ahead and just close it, you don't need to do anything special to your Lisp session. <br />
+<br />
+To get back to your code you open Eclipse, then make sure that you are in Lisp Perspective, if not select it. Before you can continue coding your program, you need to load it. To do this, right click on .asd file in your project and select <b>Load asd</b> :<br />
+<br />
+<img src="files/fig12.png" alt="" border="0" /><br />
+<br />
+This will compile and load all files for your package. You can check this by running <tt>new-lisp1:f</tt><br />
+<br />
+
+<span class="url-link"><a href="index.html">Back to table of contents</a></span>
+
+</body>
+</html>

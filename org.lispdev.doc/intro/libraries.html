@@ -1,0 +1,73 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Lisp Programming with Cusp - Using Libraries</title>
+        <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+
+<h3><a href="index.html">Lisp Programming with Cusp</a> - Using Libraries</h3>
+
+  <ul>
+  <li /><span class="url-link"><a href="#loadLib">Loading Installed Library</a></span>
+  <li /><span class="url-link"><a href="#installLib">Installing New Library</a></span>
+  <li /><span class="url-link"><a href="#useLib">Using External Library in Your Package</a></span>
+  </ul>
+
+<a name="loadLib"></a><h4>Loading Installed Library</h4>
+First we will see how to use library that is already installed. One of the library preinstalled by Cusp is CL regex library cl-ppcre. <br />
+<br />
+You can load cl-ppcre library by clicking on "Load installed package" button:<br />
+<br />
+<img src="files/load-pkg.png" alt="" border="0" /><br />
+<br />
+This opens "Load package" dialog:<br />
+<br />
+<img src="files/load-pkg-dlg.png" alt="" border="0" /><br />
+<br />
+In this dialog box select cl-ppcre and click OK. The library will be compiled and loaded, as can be seen in "Change package" dialog box:<br />
+<br />
+<img src="files/chng-pkg.png" alt="" border="0" /><br />
+<br />
+To check that the library is loaded run the following in REPL: <tt>(cl-ppcre:scan "(a)*b" "xaaabd")</tt> :<br />
+<br />
+<img src="files/ppcre.png" alt="" border="0" /><br />
+<br />
+<a name="installLib"></a><h4>Installing New Library</h4>
+Installing new library is as simple as extracting its contents to one of the folders that are checked by cusp on startup. The default folder is: jasko.tim.lisp.libs/libs foder in Eclipse plugins directory. Although split-sequence library comes with Cusp I show how we'd install it. First go to <i>cliki</i> webpage of this library: <span class="url-link"><a href="http://www.cliki.net/SPLIT-SEQUENCE">http://www.cliki.net/SPLIT-SEQUENCE</a></span>. At the end of this page there is a link where you can get this library from: <span class="url-link"><a href="http://ww.telent.net/cclan/split-sequence.tar.gz">http://ww.telent.net/cclan/split-sequence.tar.gz</a></span>. Download it and extract to a library folder. Now restart Eclipse. This is all to make library available for loading through "Load installed package" dialog. After the library is loaded, we can run split-sequence function:<br />
+<br />
+<img src="files/lib-example.png" alt="" border="0" /><br />
+<br />
+It is also possible to install library into a custome folder, not just jasko.tim.lisp.libs/libs. For this you need to add root folder to libraries in preferences. To do this go to Windows-&gt;Preferences... menu, and select Lisp-&gt;Implementations page:<br />
+<br />
+<img src="files/impl-prefs.png" alt="" border="0" /><br />
+<br />
+With such settings it is now possible to extract split-sequence.tar.gz to c:/temp/system folder for library to be immidiately visible to lisp after Cusp restarts.<br />
+<br />
+<a name="useLib"></a><h4>Using External Library in Your Package</h4>
+Once a library is installed you can use functions it exports in your code. To do this you need to perform three steps:<ol><li />Add the library to <tt>:depends-on</tt> clause of .asd file.<li />Add the library to <tt>:use</tt> clause of defpackage.lisp file.<li />Use library functions in your .lisp files.<br />
+</ol>
+As an example let's use library <tt>split-sequence</tt> in our new-lisp1 package (note that at this point this library should be loaded into lisp with <tt>(require 'split-sequence)</tt> statement):<br />
+<ul><li />Specify that our <tt>new-lisp1</tt> package should load <tt>split-sequence</tt> before it can operate correctly. To do this, open new-lisp1.asd file and add <tt>:split-sequence</tt> to <tt>:depends-on</tt> clause (don't forget to save file):<br />
+</ul>
+<img src="files/lib3.png" alt="" border="0" /><br />
+<ul><li />Declare that package <tt>new-lisp1</tt> <i>uses</i> library <tt>split-sequence</tt>. To do this go to file defpackage.lisp and add <tt>:split-sequence</tt> to <tt>:use</tt> clause (don't forget to save file):<br />
+</ul>
+<img src="files/lib2.png" alt="" border="0" /><br />
+<ul><li />Define function <tt>split-path</tt> in the package <tt>new-lisp1</tt> as follows:<br />
+</ul>
+<img src="files/lib1.png" alt="" border="0" /><br />
+<br />
+Now we can test the new function by running <tt>(new-lisp1::split-path "usr/bin")</tt>:<br />
+<br />
+<img src="files/lib6.png" alt="" border="0" /><br />
+<br />
+When you next time start new lisp session you no longer need to load <tt>split-sequence</tt> library - it will be loaded automatically when you choose <b>Load asd</b> in context menu of new-lisp1.asd file.<br />
+<br />
+<br />
+
+<span class="url-link"><a href="index.html">Back to table of contents</a></span>
+
+</body>
+</html>
