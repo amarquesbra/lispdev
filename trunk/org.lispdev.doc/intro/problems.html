@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Lisp Programming with Cusp - Dealing With Problems</title>
+        <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+
+<h3><a href="index.html">Lisp Programming with Cusp</a> - Dealing With Problems</h3>
+  <ul>
+  <li /><span class="url-link"><a href="#debugging">Debugging</a></span>
+  <li /><span class="url-link"><a href="#inspector">Inspector</a></span>
+  <li /><span class="url-link"><a href="#warnings">Compilation Warnings and Errors</a></span>
+  </ul>
+<br />
+
+<a name="debugging"></a><h4>Debugging</h4>
+If something goes wrong in your code, you get into debugger. For example, enter <tt>g</tt> in REPL:<br />
+<br />
+<img src="files/fig13.png" alt="" border="0" /><br />
+<br />
+Hitting send, opens debugger:<br />
+<br />
+<img src="files/fig15.png" alt="" border="0" /><br />
+<br />
+The debugger has three regions:<ul><li />At the top is the error message that describes why Lisp stopped the program<li />Then debugger displays options to resolve the problem. The default option which aborts previous command is highlighted so if you satisfied with this default you can just hit <b>Enter</b> to go back to REPL (or press <b>q</b>). To choose any other option you can select it and hit <b>Enter</b> or press number that corresponds to the option.<li />Backtrace shows what evaluations Lisp performed before it arrived to this error condition.<br />
+</ul>
+In this case the error happened because symbol <tt>g</tt> is not defined.<br />
+<br />
+<a name="inspector"></a><h4>Inspector</h4>
+Some regions of upper part of REPL are hyperlinks. These are objects that can be <b>inspected</b>. To inspect you just click on a hyperlink. For example, enter <tt>*package*</tt> in REPL:<br />
+<br />
+<img src="files/fig27.png" alt="" border="0" /><br />
+<br />
+and follow <tt>#&lt;PACKAGE "COMMON-LISP-USER"&gt;</tt> hyperlink. You'll get into Inspector:<br />
+<br />
+<img src="files/fig28.png" alt="" border="0" /><br />
+<br />
+which prints details of the object <tt>#&lt;PACKAGE "COMMON-LISP-USER"&gt;</tt>.<br />
+<br />
+<a name="warnings"></a><h4>Compilation Warnings and Errors</h4>
+Add to main.lisp following code:<br />
+<pre>(defun h()
+  "Call function that is not defined"
+  (hh))</pre>When you save the file, Cusp tries to send it for compilation. In this case saving generates item in Problems list:<br />
+<br />
+<img src="files/fig16a.png" alt="" border="0" /><br />
+<br />
+It is generated because we tried to compile <tt>main.lisp</tt> before we loaded package <tt>new-lisp1.asd</tt>. See section "Quitting And Starting Again".<br />
+<br />
+Now, if you load <tt>new-lisp1.asd</tt> compilation produces a warning, which is added to Problems tab and put on bar left to the code:<br />
+<br />
+<img src="files/fig16.png" alt="" border="0" /><br />
+<br />
+
+<span class="url-link"><a href="index.html">Back to table of contents</a></span>
+
+</body>
+</html>

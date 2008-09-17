@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Lisp Programming with Cusp - Getting Help</title>
+        <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+
+<h3><a href="index.html">Lisp Programming with Cusp</a> - Getting Help</h3>
+  <ul>
+  <li /><span class="url-link"><a href="#hyperDoc">HyperSpec and LispDoc</a></span>
+  <li /><span class="url-link"><a href="#autoHelp">Quick Assistance</a></span>
+  <li /><span class="url-link"><a href="#apropos">Apropos</a></span>
+  </ul>
+
+<a name="hyperDoc"></a><h4>HyperSpec and LispDoc</h4>
+<b>HyperSpec</b><br />
+<br />
+The main Lisp reference is HyperSpec. To find description of a symbol in HyperSpec put a cursor at the symbol and hit <b>Alt+H</b> (or select HyperSpec in Lisp menu):<br />
+<br />
+<img src="files/fig17.png" alt="" border="0" /><br />
+<br />
+This will open a browser window in Eclipse with page describing the symbol:<br />
+<br />
+<img src="files/fig18.png" alt="" border="0" /><br />
+<br />
+<b>LispDoc</b><br />
+<br />
+The other good source of documentation is LispDoc. On its website it is described as "a search engine for documentation of the Common Lisp programming language and many of its libraries". When you request LispDoc search on a symbol with <b>Alt+L</b> (or LispDoc from Lisp menu) you get a page in a browser with example code of this symbol and a bunch of links to Lisp documents, books or manuals that mention this symbol:<br />
+<br />
+<img src="files/fig19.png" alt="" border="0" /><br />
+<br />
+<a name="autoHelp"></a><h4>Quick Assistance</h4>
+The environment supports automatic display of help information. It can sugest completions of symbols and show call signature and documentation string. The examples below show how this feature works ( Notice how functions defined in our code also display this information ):<br />
+<br />
+<img src="files/fig20.png" alt="" border="0" />    <br />
+<br />
+<img src="files/fig21.png" alt="" border="0" /><br />
+<br />
+Cusp also support fuzzy way for proposing autocompletion, but it has to be turned on in preferences. To do this, open Windows-&gt;Preferences... menu, and set corresponding options:<br />
+<br />
+<img src="files/prefs.png" alt="" border="0" /><br />
+<br />
+Then typing <tt>m-v-b</tt> will suggest <tt>multiple-value-bind</tt>:<br />
+<br />
+<img src="files/fuzzy.png" alt="" border="0" /><br />
+<br />
+<a name="apropos"></a><h4>Apropos</h4>
+You can also search internal documentation using <b>Apropos</b>.<br />
+<br />
+<img src="files/fig22.png" alt="" border="0" /><br />
+<br />
+
+<span class="url-link"><a href="index.html">Back to table of contents</a></span>
+
+</body>
+</html>
