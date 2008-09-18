@@ -9,50 +9,175 @@
 
 <h3><a href="index.html">Lisp Programming with Cusp</a> - Dealing With Problems</h3>
   <ul>
-  <li /><span class="url-link"><a href="#debugging">Debugging</a></span>
+  <li /><span class="url-link"><a href="#debugging">Basic Debugger Overview</a></span>
+  <li /><span class="url-link"><a href="#debuggingmore">Advanced Debugger Features</a></span>
   <li /><span class="url-link"><a href="#inspector">Inspector</a></span>
   <li /><span class="url-link"><a href="#warnings">Compilation Warnings and Errors</a></span>
+  <li /><span class="url-link"><a href="#tracing">Watch (trace)</a></span>
   </ul>
 <br />
 
 <a name="debugging"></a><h4>Debugging</h4>
-If something goes wrong in your code, you get into debugger. For example, enter <tt>g</tt> in REPL:<br />
+
+If something goes wrong in your code, you get into debugger. For example, enter 
+<tt>g</tt> in REPL:<br />
 <br />
 <img src="files/fig13.png" alt="" border="0" /><br />
 <br />
-Hitting send, opens debugger:<br />
+Hitting <b>Send</b>, opens debugger:<br />
 <br />
 <img src="files/fig15.png" alt="" border="0" /><br />
 <br />
-The debugger has three regions:<ul><li />At the top is the error message that describes why Lisp stopped the program<li />Then debugger displays options to resolve the problem. The default option which aborts previous command is highlighted so if you satisfied with this default you can just hit <b>Enter</b> to go back to REPL (or press <b>q</b>). To choose any other option you can select it and hit <b>Enter</b> or press number that corresponds to the option.<li />Backtrace shows what evaluations Lisp performed before it arrived to this error condition.<br />
+The debugger has three regions:
+<ul>
+<li />At the top is the error message that describes why Lisp stopped the program
+<li />Then debugger displays options to resolve the problem. 
+The default option which aborts previous command is highlighted so if you 
+satisfied with this default you can just hit <b>Enter</b> to go back to REPL 
+(or press <b>q</b>). To choose any other option you can select it and hit 
+<b>Enter</b> or press number that corresponds to the option.
+<li />Backtrace shows what evaluations Lisp performed before it arrived 
+to this error condition.<br />
 </ul>
 In this case the error happened because symbol <tt>g</tt> is not defined.<br />
 <br />
+
+<a name="debuggingmore"></a><h4>Advanced Debugger Features</h4>
+<br/>
+This section is an edited version (to adapt it to Cusp features) of a
+<a href="http://article.gmane.org/gmane.lisp.slime.devel/7447">message</a> by
+Helmut Eller from slime development mailing list.
+<br/><br/>
+When Lisp enters debugging state it shows backtraces with frames.  
+A frame (sometimes called stack-frame, or activation record) contains
+the information--return address, values of variables etc.--that the Lisp
+system stores on the stack before a function call, i.e. the information
+that is needed after the call returns.  In the debugger, there's one
+frame for each active call.  The "backtrace" or "stacktrace" is the list
+of frames.  Debuggers for languages like C/Java/Python also have frames;
+it's not a Lisp specific concept.<br/><br/>
+
+While the backtrace only contains the information needed to continue
+after a call, it's often convenient to think of it as a snapshot of the
+stack before the call.  That's what makes backtraces so useful for
+debugging.<br/><br/>
+
+Let's consider trivial example. Create new project and define the following
+functions in your main.lisp file:
+<pre>
+(defun g (x)
+  (z x))
+
+(defun z (x)
+  (y x))
+</pre>
+
+Now type <tt>(g 3)</tt> in REPL and call evaluate. Lisp brings up debugger:<br/><br/>
+<img src="files/fig15a.png" alt="" border="0" /><br />
+
+<br/> 
+You can also inspect variables in frames - select variable that you are interested
+in and press 'Enter' key or double click on the variable:
+<br/><br/>
+<img src="files/fig15a1.png" alt="" border="0" /><br /><br/>
+this brings up inspector:<br/><br/>
+<img src="files/fig15a2.png" alt="" border="0" /><br /><br/>
+<br/>
+
+There are a few different ways stop execution:
+<ul>
+<li>1. Insert a <tt>(break)</tt> call at the place where you want to stop.
+BREAK just invokes the debugger. (Of course, just inserting the text
+"(break)" isn't enough, you also must recompile the function, however
+this is done by Cusp automatically once you save the file.)<br/><br/>
+Cusp also provides a tool to manage break statements. If you select
+complete s-expression (select using 'Expand Selection' command: Alt+Enter)
+and use 'Toggle Breakpoint' command from Lisp menu
+(Alt+B) Cusp will surround the s-expression into break macro and will
+put a breakpoint annotation marker:<br/><br/>
+<img src="files/fig15b.png" alt="" border="0" /><br />
+To remove break statement, select whole break expression (using Alt+Enter)
+and use 'Toggle Breakpoint' command (Alt+B) to remove break macro.<br/>
+</li>
+<li>
+2. If you want to debug an endless loop or some lengthy computation you
+can press 'Interrupt execution' button (unfortunately this doesn't work
+on windows with current version of SBCL, since at the moment SBCL doesn't
+have threads on win32):<br /><br />
+<img src="files/fig15c.png" alt="" border="0" /><br />
+</li>
+<li>
+3. Just run your program and wait until it signals an error.  If the
+error isn't handled by your program the Lisp system will invoke the
+debugger instead.
+</li>
+</ul>
+<br/><br/>
+
+If the execution was stopped using BREAK you can step through the code.
+With SBCL you can step "sexp-by-sexp". To try this feature first define the
+following function:
+<pre>
+(defun gg (x)
+  (progn
+    (format t "1 ~a~%" (elt (cl-user::cusp-break x) 1))
+    (format t "2 ~a~%" (elt x 2))
+    ))
+</pre>
+Evaluation of <tt>(g '(1 2 3))</tt> brings up the debugger:<br/><br/>
+<img src="files/fig15c1.png" alt="" border="0" /><br /><br/>
+We press 'Step' button to step through the code (notice that once you start
+stepping you can select if you want to step 'into' or 'over' by controls
+in list of restarts):<br/>
+<img src="files/fig15c3.png" alt="" border="0" /><br /><br/>
+
+
+
 <a name="inspector"></a><h4>Inspector</h4>
-Some regions of upper part of REPL are hyperlinks. These are objects that can be <b>inspected</b>. To inspect you just click on a hyperlink. For example, enter <tt>*package*</tt> in REPL:<br />
+
+Some regions of upper part of REPL are hyperlinks. These are objects that can be
+<b>inspected</b>. To inspect you just click on a hyperlink. For example, enter 
+<tt>*package*</tt> in REPL:<br />
 <br />
 <img src="files/fig27.png" alt="" border="0" /><br />
 <br />
-and follow <tt>#&lt;PACKAGE "COMMON-LISP-USER"&gt;</tt> hyperlink. You'll get into Inspector:<br />
+and follow <tt>#&lt;PACKAGE "COMMON-LISP-USER"&gt;</tt> hyperlink. You'll get 
+into Inspector:<br />
 <br />
 <img src="files/fig28.png" alt="" border="0" /><br />
 <br />
 which prints details of the object <tt>#&lt;PACKAGE "COMMON-LISP-USER"&gt;</tt>.<br />
 <br />
+
 <a name="warnings"></a><h4>Compilation Warnings and Errors</h4>
+
 Add to main.lisp following code:<br />
 <pre>(defun h()
   "Call function that is not defined"
-  (hh))</pre>When you save the file, Cusp tries to send it for compilation. In this case saving generates item in Problems list:<br />
+  (hh))</pre>When you save the file, Cusp tries to send it for compilation. 
+  In this case saving generates item in Problems list:<br />
 <br />
 <img src="files/fig16a.png" alt="" border="0" /><br />
 <br />
-It is generated because we tried to compile <tt>main.lisp</tt> before we loaded package <tt>new-lisp1.asd</tt>. See section "Quitting And Starting Again".<br />
+It is generated because we tried to compile <tt>main.lisp</tt> before we 
+loaded package <tt>new-lisp1.asd</tt>. See section "Quitting And Starting Again".<br />
 <br />
-Now, if you load <tt>new-lisp1.asd</tt> compilation produces a warning, which is added to Problems tab and put on bar left to the code:<br />
+Now, if you load <tt>new-lisp1.asd</tt> compilation produces a warning, 
+which is added to Problems tab and put on bar left to the code:<br />
 <br />
 <img src="files/fig16.png" alt="" border="0" /><br />
 <br />
+
+<a name="tracing"></a><h4>Watch (trace)</h4>
+If you want to quickly trace a value in your functions you can use simple
+trace macro that Cusp provides. The convenience of the macro is that it is
+very easy to add/remove and it is tracked by markers. To trace an expression first
+select it (use Alt+Enter) and then press Alt+T to add the macro. Removing is as
+easy: select whole macro expression and press Alt+T:<br/><br/>
+<img src="files/fig16b.png" alt="" border="0" /><br />
+<br />
+
+
 
 <span class="url-link"><a href="index.html">Back to table of contents</a></span>
 
