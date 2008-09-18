@@ -13,29 +13,56 @@
   <li /><span class="url-link"><a href="#createProject">Creating Lisp Project</a></span>
   <li /><span class="url-link"><a href="#writingCode">Writing Code and Basic Navigation</a></span>
   <li /><span class="url-link"><a href="#quitStart">Quitting And Restarting</a></span>
+  <li /><span class="url-link"><a href="#executable">Building Executable</a></span>
 </ul>
 
 <a name="createProject"></a><h4>Creating Lisp Project</h4>
+
 <ul>
 <li />Start Eclipse.
 <li />Go to Window &gt; Open Perspective &gt; Other...<br />
 <img src="files/fig1.png" alt="" border="0" /><br /><br />
-<li />Choose Lisp. You'll need to wait while Cusp starts and connects to lisp process. The first time Cusp starts it compiles code that connects to Lisp, and it might take couple minutes on slow machines, so be patient. Next time you'll start Cusp, it will load Lisp and connect to it much quicker.<br />
+<li />Choose Lisp. You'll need to wait while Cusp starts and connects to Lisp process.
+The first time Cusp starts it compiles code that connects to Lisp, and it might take
+couple minutes on slow machines, so be patient. Next time you'll start Cusp, it will
+load Lisp and connect to it much quicker.<br />
 <img src="files/fig2.png" alt="" border="0" /><br /><br />
 <li />Start new <span class="todo">project: File &gt; New &gt; Lisp Project</span><br />
 <img src="files/fig3.png" alt="" border="0" /><br /><br />
-<li />In New Lisp Project dialog box don't change anything and just hit Finish.<br />
+<li />In New Lisp Project dialog box accept default settings and click Finish.<br />
 <img src="files/fig4.png" alt="" border="0" /><br /><br />
-<li />Project wizard will create three files: new-lisp1.asd, main.lisp, defpackage.lisp<br />
-- new-lisp1.asd - it is a sort of make file for your program, we'll look at it later<br />
-- defpackage.lisp - it is a sort of header file, here you declare functions and other symbols that are exported from the package<br />
+<li />The Project wizard will create four files: new-lisp1.asd, main.lisp, defpackage.lisp,
+and tests.lisp<br />
+- new-lisp1.asd - it is a make file which describes lisp how to build your program<br />
+- defpackage.lisp - it is an interface file (somewhat analogous to header files in C/C++), 
+here you declare functions and other symbols that are exported from the package<br />
 - main.lisp - this file will hold your code<br />
-<li />Once project is created it will be automatically compiled and loaded. We'll discuss later what this mean.<br />
+- tests.lisp - this file will hold tests for you code<br />
+<li />Once project is created it will be automatically compiled and loaded. Highlighted
+regions on the figure show successful compilation message and current package in REPL.<br />
+<img src="files/fig4a.png" alt="" border="0" /><br /><br />
 </ul>
+
 <a name="writingCode"></a><h4>Writing Code and Basic Navigation</h4>
-</a>Open file main.lisp and after <tt>(in-package :new-lisp1)</tt> write the following code: <pre>(defun f () "hello, world!")</pre><img src="files/fig5.png" alt="" border="0" /><br />
+
+</a>Open file main.lisp and scroll to the end of the file. For now ignore the code
+that the wizard has generated. Type opening bracket '(' and notice how Cusp automatically
+inserts closing bracket. Lisp code contains many brackets and Cusp has many
+features dealing with bracketed expressions (s-expressions). This behavior is
+optional and can be customized in Cusp preferences:<br />
+<img src="files/fig4b.png" alt="" border="0" /><br />
+
+Continue typing '(defun)':<br />
+<img src="files/fig4c.png" alt="" border="0" /><br />
+If you now press space bar the code automatically expanded (AutoEdit) and argument tip is shown:<br />
+<img src="files/fig4d.png" alt="" border="0" /><br />
+The AutoEdits are customizable in preferences on AutoEdits page. Continue
+entering code as follows:<br />
+<img src="files/fig5.png" alt="" border="0" /><br />
 <br />
-Save the file. As file is saved your new code is immidiately compiled. You can check this by typing in lower part of REPL <tt>(new-lisp1::f)</tt> and hitting <b>Enter</b> key or pressing <b>Send</b> button:<br />
+Save the file (Ctrl+S). As file is saved your new code is immediately compiled.
+You can check this by typing in lower part of REPL <tt>(f)</tt> and pressing <b>Ctrl+Enter</b>
+or clicking on <b>Send</b> button:<br />
 <br />
 <img src="files/fig6.png" alt="" border="0" /><br />
 <br />
@@ -43,32 +70,105 @@ The result is displayed in upper part of REPL:<br />
 <br />
 <img src="files/fig7.png" alt="" border="0" /><br />
 <br />
-To export the function <tt>f</tt> from the package <tt>new-lisp1</tt> do the following (these operations are overkill for such a short source code, but they show important navigation features of Cusp IDE):<ul><li />Select <tt>in-package :new-lisp1</tt> in outline window to jump to the location of this statement in the code.<br />
+The function <tt>f</tt> is defined in package <tt>new-lisp1</tt>. To see this
+change package to default <tt>CL-USER</tt> by first clicking on 'Change package' button:<br/>
+<img src="files/fig7a.png" alt="" border="0" /><br />
+And then selecting package <tt>CL-USER</tt>:<br/>
+<img src="files/fig7b.png" alt="" border="0" /><br />
+Note: the other way to change package is evaluating <tt>(in-package 'cl-user)</tt> in REPL.<br/>
+From other packages the function <tt>f</tt> from <tt>new-lisp1</tt> is called by
+<tt>(new-lisp1::f)</tt>. Notice '::' - this means that the function is internal to the package.
+
+To export the function <tt>f</tt> from the package <tt>new-lisp1</tt>
+do the following (these operations are overkill for such a short source code,
+but they show important navigation features of Cusp IDE):
+<ul>
+<li />Select <tt>in-package :new-lisp1</tt> in outline window to jump to
+the location of this statement in the code.<br />
 </ul>
 <img src="files/fig8.png" alt="" border="0" /><br />
-<ul><li /><b>Ctrl+Click</b> on <tt>:new-lisp1</tt> to find location where this symbol is defined. <br />
+<ul><li /><b>Ctrl+Click</b> on <tt>:new-lisp1</tt> (or press F3) to find location
+ where this symbol is defined. <br />
 </ul>
 <img src="files/fig8a.png" alt="" border="0" />    <br />
-<ul><li />This operation brings up dialog box <b>Definitions</b>. Select <tt>(DEFPACKAGE :NEW-LISP1)</tt> and hit <b>OK</b>:<br />
+<ul><li />This operation brings up dialog box <b>Definitions</b>. Select 
+<tt>(DEFPACKAGE :NEW-LISP1)</tt> and hit <b>OK</b>:<br />
 </ul>
 <img src="files/fig9.png" alt="" border="0" />    <br />
-<ul><li />The previous operation will bring up the file defpackage.lisp. Type <tt>f</tt> in <tt>:export</tt> and save file:<br />
+<ul><li />The previous operation will bring up the file defpackage.lisp. Type 
+<tt>f</tt> in <tt>:export</tt> and save file:<br />
 </ul>
 <img src="files/fig10.png" alt="" border="0" /><br />
-<ul><li />Now the function <tt>f</tt> is exported from the package <tt>new-lisp1</tt> which can be checked by typing <tt>(new-lisp1:f)</tt> in REPL (note single <tt>:</tt> instead of double <tt>::</tt> in previous test, which signifies the fact that we just called a symbol exported from the package).<br />
-<li />To get back to the definition of function <tt>f</tt> just type <b>Alt-BackArrow</b> <b>Alt-BackArrow</b> or use navigation buttons on main toolbar:<br />
+<ul><li />Now the function <tt>f</tt> is exported from the package 
+<tt>new-lisp1</tt> which can be checked by typing <tt>(new-lisp1:f)</tt> 
+in REPL (note single <tt>:</tt> instead of double <tt>::</tt> in previous test, 
+which signifies the fact that we just called a symbol exported from the package).<br />
+<li />To get back to the definition of function <tt>f</tt> just type 
+<b>Alt-BackArrow</b> <b>Alt-BackArrow</b> or use navigation buttons on main toolbar:<br />
 </ul>
 <img src="files/fig11.png" alt="" border="0" />   <br />
 <br />
+
+
 <a name="quitStart"></a><h4>Quitting And Restarting</h4>
+
 <br />
-Once you tired of coding you will want to close Eclipse. Go ahead and just close it, you don't need to do anything special to your Lisp session. <br />
+Once you tired of coding you will want to close Eclipse. Go ahead and just close
+it, you don't need to do anything special to your Lisp session. <br />
 <br />
-To get back to your code you open Eclipse, then make sure that you are in Lisp Perspective, if not select it. Before you can continue coding your program, you need to load it. To do this, right click on .asd file in your project and select <b>Load asd</b> :<br />
+To get back to your code, open Eclipse, then make sure that you are in Lisp
+Perspective, if not select it. Before you can continue coding your program, you
+need to load it. To do this, right click any project file or folder project and
+select
+<b>Load Project</b> :<br />
 <br />
 <img src="files/fig12.png" alt="" border="0" /><br />
 <br />
-This will compile and load all files for your package. You can check this by running <tt>new-lisp1:f</tt><br />
+This will compile and load all files for your project, and also will change REPL to
+your package. You can check this by running <tt>(f)</tt><br />
+<br />
+
+
+<a name="executable"></a><h4>Building Executable</h4>
+
+<br/>
+One often asked question by people starting learning Lisp is "How do I create executable?"
+The answers to this question that can be found on the net are not very useful, since traditionally
+Lisp programs are executed inside Lisp image (virtual machine) and experts
+don't see use of executables. However, since this is a very common question, Cusp
+provides very simple means of creating single executable file from your Lisp code (this feature
+currently works only with SBCL).
+<br/><br/>
+Before you can create executable you need to define a top level form: this is a
+function that doesn't take arguments and returns integer (0 if success).
+This top level form is the entry point to your program (function that is
+called first when executable starts).
+<br/><br/>
+By default the 'New Lisp Project' wizard creates example function that
+can be used as a top level form 'main' (it also shows how to pass arguments
+into Lisp program).
+<br/><br/>
+Let's crate an executable that uses the function generated by the wizard.
+To do this, right click on any file in the project or its folder and select
+'Create Exe':
+<br/>
+<img src="files/fig12a.png" alt="" border="0" /><br />
+<br />
+This brings up 'Create Executable' wizard. Adjust path where you want
+executable to be created 'Finish':
+<br/>
+<img src="files/fig12b.png" alt="" border="0" /><br />
+<br/>
+After executable is created it can be run from shell (notice that I redirect
+stderr to null, since I don't want to see starting warning message from
+SBCL running on Windows):<br/>
+<img src="files/fig12c.png" alt="" border="0" /><br />
+<br />
+Note: The executable is about 20MB large because it contains whole
+Lisp system including compiler and debugger. If Lisp is already installed
+on the system it is possible to create executable script. This feature is
+not yet provided by Cusp. See <a href="http://www.cliki.net/cl-launch">cl-launch</a>. 
+<br />
 <br />
 
 <span class="url-link"><a href="index.html">Back to table of contents</a></span>
