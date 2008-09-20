@@ -2,6 +2,10 @@ BODY {
 	font-family: Verdana; font-size: 90%;
 }
 
+TABLE {
+    font-family: Verdana; font-size: 90%;
+}
+
 .wiki-name-ref {
 	color: #888888; font-size: 75%;
 }
