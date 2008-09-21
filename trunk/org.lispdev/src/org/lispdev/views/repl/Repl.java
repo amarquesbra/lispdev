@@ -21,6 +21,7 @@ import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.VerifyEvent;
@@ -368,26 +369,6 @@ public class Repl extends ProjectionViewer
     return inEditMode;
   }
 
-  /**
-   * Handles disconnection of undo manager (to prevent collecting undo
-   * operations when editor is not in editing mode)
-   */
-  private void disconnectUndoManager()
-  {
-    undoManager.reset();
-    undoManager.disconnect();
-  }
-
-  /**
-   * Handles connection to undo manager 
-   */
-  private void connectUndoManager()
-  {
-    undoManager.connect(this);
-    undoManager.reset();
-    undoManager.setMaximalUndoLevel(MAX_UNDO);
-  }
-
   public Repl(Composite parent, IVerticalRuler ruler, int styles)
   {
     super(parent, ruler, null, false, styles);
@@ -404,8 +385,43 @@ public class Repl extends ProjectionViewer
     readOnlyPositions = new HashMap<PartitionData,Position>();
     undoManager = new TextViewerUndoManager(MAX_UNDO);
     iniUndoManager();
+    disconnectUndoManager();
+    inEditMode = false;
+    editOffset = 0;
     doc.addPositionUpdater(new DefaultPositionUpdater(READ_ONLY_CATEGORY));
-    appendVerifyKeyListener(new ReadOnlyBackspaceDel(this));
+    appendVerifyKeyListener(new VerifyKeyListener()/*ReadOnlyBackspaceDel(this)*/
+    {
+      public void verifyKey(VerifyEvent event)
+      {
+        int offset = getTextWidget().getCaretOffset();
+        if( !isInEditMode() || offset < getEditOffset())
+        {
+          return;
+        }
+        if( event.keyCode == SWT.DEL )
+        {
+          PartitionData pd = getReadOnlyPartition(offset, Repl.AFTER);
+          if( pd != null )
+          {
+            deletePartInEdit(pd);
+            event.doit = false;
+          }
+          return;
+        }
+        if( event.keyCode == SWT.BS )
+        {
+          PartitionData pd = getReadOnlyPartition(offset, Repl.BEFORE);
+          if( pd != null )
+          {
+            deletePartInEdit(pd);
+            event.doit = false;
+          }
+          return;
+        }
+        return;        
+      }
+      
+    });
   }
 
   /**
@@ -440,6 +456,7 @@ public class Repl extends ProjectionViewer
         }
       }
 
+      // TODO: should the combination be customizable?
       private boolean isUndoKeyPress(KeyEvent e)
       {
         // CTRL + z
@@ -459,6 +476,26 @@ public class Repl extends ProjectionViewer
         // do nothing
       }
     });
+  }
+
+  /**
+   * Handles disconnection of undo manager (to prevent collecting undo
+   * operations when editor is not in editing mode)
+   */
+  private void disconnectUndoManager()
+  {
+    undoManager.reset();
+    undoManager.disconnect();
+  }
+
+  /**
+   * Handles connection to undo manager 
+   */
+  private void connectUndoManager()
+  {
+    undoManager.connect(this);
+    undoManager.reset();
+    undoManager.setMaximalUndoLevel(MAX_UNDO);
   }
 
   /**
@@ -844,9 +881,42 @@ public class Repl extends ProjectionViewer
     catch(BadLocationException e)
     {
       logException("deletePartInEdit: could not delete text",e);
-      e.printStackTrace();
     }
     editPartition.children.remove(pd);
+  }
+  
+  
+  /**
+   * clears all text, leaves editing mode unchanged
+   */
+  public void clear()
+  {
+    logTraceEntry("clear","",7);
+    
+    try
+    {
+      if( doc.containsPositionCategory(READ_ONLY_CATEGORY) )
+      {
+        doc.removePositionCategory(READ_ONLY_CATEGORY);
+      }
+    }
+    catch(BadPositionCategoryException e)
+    {
+      logException("clear: should never get here...",e);
+    }
+    partitionRegistry.clear();
+    readOnlyPositions.clear();
+    disconnectUndoManager();
+    editOffset = 0;
+    try
+    {
+      doc.replace(0, doc.getLength(), "");
+    }
+    catch(BadLocationException e)
+    {
+      logException("clear: should never end up here",e);
+    }
+    logTraceReturn("clear","",7);
   }
   
   /*
