@@ -306,7 +306,14 @@ public class Repl extends ProjectionViewer
         for( PartitionData pdc : editPartition.children )
         {
           Position pos = readOnlyPositions.get(pdc);
-          pdc.start = pos.getOffset() - editOffset;
+          if( pos == null )
+          {
+            logErr("getCurrentEditPartition: pos == null");
+          }
+          else
+          {
+            pdc.start = pos.getOffset() - editOffset;            
+          }
         }
       }
       return editPartition;
@@ -539,9 +546,9 @@ public class Repl extends ProjectionViewer
       {
         logException("stopEdit: should never get here...",e);
       }
+      partitionRegistry.add(getCurrentEditPartition());
       readOnlyPositions.clear();
       disconnectUndoManager();
-      partitionRegistry.add(getCurrentEditPartition());
       inEditMode = false;
       editOffset = doc.getLength();
       logTrace("stopEdit: stop edit mode at offset = " 
