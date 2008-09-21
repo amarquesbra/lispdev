@@ -8,22 +8,21 @@ import org.lispdev.utils.*;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
-import org.junit.*;
-
-import static org.junit.Assert.*;
+import junit.framework.*;
 
 /**
  * @author sk
  * 
  */
-public class LispdevTest
+public class LispdevTest extends TestCase
 {
   
   /**
    * Test method for {@link org.lispdev.LispdevPlugin#ID}.
+   * Test that platform supplied ID is same as hardcoded in plugin.
+   * All functions in pluggin assume that hardcoded is correct one.
    */
-  @Test
-  public void pluginID()
+  public void testPluginID()
   {
     
     assertEquals(LispdevPlugin.getDefault().getBundle().getSymbolicName(),
@@ -47,9 +46,10 @@ public class LispdevTest
   
   /**
    * Test method for {@link org.lispdev.LispdevDebug#trace}.
+   * for this to pass set tracing. go to Run Configurations...->Tracing
+   * Set Enable Tracing to On and enable tracing for org.lispdev
    */
-  @Test
-  public final void traceOK()
+  public final void testTraceOK()
   {
     assertEquals("<launch> testing launch trace",
         getTraceString(LispdevDebug.TRACE_LAUNCH, "testing launch trace"));
@@ -59,19 +59,27 @@ public class LispdevTest
   
   /**
    * Test exception in {@link org.lispdev.LispdevDebug#prepareTrace}.
+   * Test checks exception when asked for non-registered test category
    */
-  @Test(expected=ArrayIndexOutOfBoundsException.class)
-  public final void traceError()
+  //@Test(expected=ArrayIndexOutOfBoundsException.class)
+  public final void testTraceError() 
   {
-    assertEquals("<launch> testing launch trace",
-        getTraceString(10000, "testing launch trace"));
+    try
+    {
+      assertEquals("<launch> testing launch trace",
+          getTraceString(10000, "testing launch trace"));      
+    }
+    catch(ArrayIndexOutOfBoundsException e)
+    {
+      
+    }
   }
 
   /**
    * Test method for {@link org.lispdev.LispdevDebug#abort}.
+   * Check throw of assertion when abort is called
    */
-  @Test
-  public final void abort()
+  public final void testAbort()
   {
     try
     {

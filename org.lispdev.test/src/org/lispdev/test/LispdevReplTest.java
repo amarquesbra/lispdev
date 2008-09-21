@@ -8,15 +8,13 @@ import org.lispdev.views.ReplView;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.ui.*;
-import org.junit.*;
-
-import static org.junit.Assert.*;
+import junit.framework.*;
 
 /**
  * @author sk
  *
  */
-public class LispdevReplTest
+public class LispdevReplTest extends TestCase
 {
 
   private IWorkbenchPage getPage() {
@@ -28,16 +26,18 @@ public class LispdevReplTest
   
   /**
    * Test method for {@link org.lispdev.views.ReplView}.
+   * Test that Repl view is available
    */
-  @Test
-  public void viewShowHide() throws PartInitException
+  public void testViewShowHide() throws PartInitException
   {
     IViewPart view = getPage().showView(ReplView.ID);
     getPage().hideView(view);
   }
 
-  @Test
-  public void replPrint() throws PartInitException
+  /**
+   * Test printing to repl with style TODO: doesn't do any testing yet
+   */
+  public void testReplPrint() throws PartInitException
   {
     ReplView view = (ReplView)getPage().showView(ReplView.ID);
     view.repl.appendText("some text", "some context", 1,
