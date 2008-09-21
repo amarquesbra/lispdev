@@ -16,7 +16,8 @@ public class ReplConfiguration extends TextSourceViewerConfiguration
     repl = r;
   }
   
-  public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType)
+  public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer,
+      String contentType)
   {
     return new IAutoEditStrategy[]{new ReplAutoEdit(repl)};
   }

@@ -4,8 +4,6 @@
 package org.lispdev.views;
 
 import org.lispdev.LispdevPlugin;
-import org.lispdev.views.repl.IReplInputListener;
-import org.lispdev.views.repl.PartitionData;
 import org.lispdev.views.repl.Repl;
 import org.lispdev.views.repl.ReplEchoListener;
 import org.lispdev.views.repl.ReplEnterTrigger;
@@ -14,7 +12,6 @@ import org.lispdev.views.repl.ReplInputTrigger;
 import org.eclipse.jface.text.source.VerticalRuler;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
-import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
