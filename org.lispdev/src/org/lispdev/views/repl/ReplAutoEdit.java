@@ -15,9 +15,9 @@ public class ReplAutoEdit implements IAutoEditStrategy
 {
   private Repl repl; 
 
-  public ReplAutoEdit(Repl r)
+  public ReplAutoEdit(Repl repl)
   {
-    repl = r;
+    this.repl = repl;
   }
   
   /* (non-Javadoc)
