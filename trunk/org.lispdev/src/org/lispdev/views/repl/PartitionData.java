@@ -16,7 +16,7 @@ public class PartitionData
   public int start;
   public int length;
   public String context;
-  public int id;
+  public String id;
   public StyleRange[] originalStyle;
   public StyleRange[] mouseOverStyle;
   public StyleRange[] mouseOverCtrlStyle;
@@ -28,13 +28,13 @@ public class PartitionData
   public IMouseAction actionOverCtrl;
   public ArrayList<PartitionData> children;
 
-  public PartitionData(int start, int length, String context, int id)
+  public PartitionData(int start, int length, String context, String id)
   {
     this(start, length, context, id, null, null, null, null, null, null,
         null, null, null);
   }
 
-  public PartitionData(int start, int length, String context, int id,
+  public PartitionData(int start, int length, String context, String id,
       StyleRange[] originalStyle)
   {
     this(start, length, context, id, originalStyle, null, null, null, null,
@@ -56,7 +56,7 @@ public class PartitionData
    * @param actionOver
    * @param actionOverCtrl
    */
-  public PartitionData(int start, int length, String context, int id,
+  public PartitionData(int start, int length, String context, String id,
       StyleRange[] originalStyle, StyleRange[] mouseOverStyle,
       StyleRange[] mouseOverCtrlStyle, IMouseAction actionClick,
       IMouseAction actionRightClick, IMouseAction actionCtrlClick,
@@ -117,4 +117,26 @@ public class PartitionData
     +String.valueOf(start)+","+String.valueOf(length)+"}";
     return res;
   }
+  
+  public static boolean equal(PartitionData pd1, PartitionData pd2)
+  {
+    if( pd1 == null && pd2 == null )
+      return true;
+    if( pd1 == null && pd2 != null )
+      return false;
+    if( pd1 != null && pd2 == null ) 
+      return false;
+    //now both are not null
+    if( pd1.start != pd2.start )
+      return false;
+    if( pd1.length != pd2.length )
+      return false;
+    if( pd1.context != null && !pd1.context.equals(pd2.context))
+      return false;
+    if( pd1.context == null && pd2.context != null )
+      return false;
+    
+    return true;
+  }
+  
 }

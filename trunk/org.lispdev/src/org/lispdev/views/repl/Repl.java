@@ -669,7 +669,7 @@ public class Repl extends ProjectionViewer
    * caret to end of document by calling:
    * repl.getTextWidget().setCaretOffset(repl.getDocument().getLength());
    */
-  public void startEdit(String prompt, String promptContext, int id,
+  public void startEdit(String prompt, String promptContext, String id,
       StyleRange[] promptStyle, boolean onNewLine)
   {
     logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
@@ -706,7 +706,7 @@ public class Repl extends ProjectionViewer
    * <code>SWT.NORMAL</code>, <code>SWT.ITALIC</code> or <code>SWT.BOLD</code>
    * @param onNewLine - if true, prompt is printed on new line
    */
-  public void startEdit(String prompt, String promptContext, int id,
+  public void startEdit(String prompt, String promptContext, String id,
       Color foreground, Color background, int fontStyle, boolean onNewLine)
   {
     logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
@@ -819,7 +819,7 @@ public class Repl extends ProjectionViewer
         if( onNewLine )
         {
           PartitionData pd = new PartitionData(offset,"\n".length(),
-              NEW_LINE_CONTEXT,0);
+              NEW_LINE_CONTEXT,"0");
           partitionRegistry.add(pd);
           doc.replace(offset, 0, "\n");
           ++offset;
@@ -827,7 +827,7 @@ public class Repl extends ProjectionViewer
         PartitionData pd;
         if(data == null)
         {
-          pd = new PartitionData(offset,str.length(), NULL_CONTEXT,0);
+          pd = new PartitionData(offset,str.length(), NULL_CONTEXT,"0");
         }
         else
         {
@@ -863,7 +863,7 @@ public class Repl extends ProjectionViewer
    * @param styles - styles to format the text. Can be <code>null</code>
    * @param onNewLine - if true starts prompt on new line
    */
-  public void appendText(String str, String context, int id,
+  public void appendText(String str, String context, String id,
       StyleRange[] styles, boolean onNewLine)
   {
     logTraceEntry("appendText","\""+str+"\",\""+context+"\","
