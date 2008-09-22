@@ -77,7 +77,7 @@ public class ReplView extends ViewPart
     ReplEchoListener echo = new ReplEchoListener(repl);
     it.addInputListener(echo);
     repl.appendVerifyKeyListener(it);
-    repl.startEdit("start>", "this prompt",0,
+    repl.startEdit("start>", "this prompt","0",
         new StyleRange[]{new StyleRange(0, "start>".length(),
             null, null, SWT.BOLD)},false);
 

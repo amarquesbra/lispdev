@@ -43,9 +43,9 @@ public class ReplEchoListener implements IReplInputListener
       cn.length = "context: ".length();
       cn.fontStyle = SWT.BOLD;
       repl.appendText(str, 
-          new PartitionData(0,str.length(),"echo_context",0,
+          new PartitionData(0,str.length(),"echo_context","0",
               new StyleRange[]{pr,cn}),true);
-      repl.startEdit("Echo>","echo_prompt",0,
+      repl.startEdit("Echo>","echo_prompt","0",
           null,null,SWT.BOLD,true);      
     }
   }
