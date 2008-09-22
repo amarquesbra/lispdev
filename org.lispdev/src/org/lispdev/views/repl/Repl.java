@@ -196,17 +196,17 @@ public class Repl extends ProjectionViewer
    * Edit mode flag. If true - can append text using keyboard. Otherwise can
    * append text only using appendText functions.
    */
-  private boolean inEditMode = false;
-  private void setEditMode(boolean inEditMode)
+  private boolean editFlag = false;
+  private void setEditModeFlag(boolean inEditMode)
   {
-    this.inEditMode = inEditMode;
+    this.editFlag = inEditMode;
   }
   /**
    * @return <code>true</code> if in edit mode, or <code>false</code> otherwise
    */
-  public boolean isInEditMode()
+  public boolean getEditModeFlag()
   {
-    return inEditMode;
+    return editFlag;
   }
 
   private IDocument doc;
@@ -263,7 +263,7 @@ public class Repl extends ProjectionViewer
   {
     logTraceEntry("getEditText","",7);
     String res = null;
-    if(isInEditMode())
+    if(getEditModeFlag())
     {
       try
       {
@@ -466,7 +466,7 @@ public class Repl extends ProjectionViewer
    */
   private PartitionData getCurrentEditPartition()
   {
-    if( isInEditMode() )
+    if( getEditModeFlag() )
     {
       editPartition.length = doc.getLength() - getEditOffset();
       if( editPartition.children != null )
@@ -537,7 +537,7 @@ public class Repl extends ProjectionViewer
     undoManager = new TextViewerUndoManager(MAX_UNDO);
     iniUndoManager();
     disconnectUndoManager();
-    setEditMode(false);
+    setEditModeFlag(false);
     setEditOffset(0);
     doc.addPositionUpdater(new DefaultPositionUpdater(READ_ONLY_CATEGORY));
     appendVerifyKeyListener(new VerifyKeyListener()/*ReadOnlyBackspaceDel(this)*/
@@ -545,7 +545,7 @@ public class Repl extends ProjectionViewer
       public void verifyKey(VerifyEvent event)
       {
         int offset = getTextWidget().getCaretOffset();
-        if( !isInEditMode() || offset < getEditOffset())
+        if( !getEditModeFlag() || offset < getEditOffset())
         {
           return;
         }
@@ -669,14 +669,14 @@ public class Repl extends ProjectionViewer
   {
     logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
         +"\","+String.valueOf(promptStyle),7);
-    if( isInEditMode() )
+    if( getEditModeFlag() )
     {
       logTrace("startEdit: called in edit mode",7);
       stopEdit();
     }
     appendText(prompt, promptContext, id, promptStyle, onNewLine);
     connectUndoManager();
-    setEditMode(true);
+    setEditModeFlag(true);
     editPartition = new PartitionData(getEditOffset(),0,
         promptContext+"."+EDIT_CONTEXT,id);
     logTrace("startEdit: Start edit mode at offset = " + String.valueOf(getEditOffset())
@@ -721,7 +721,7 @@ public class Repl extends ProjectionViewer
   public void stopEdit()
   {
     logTraceEntry("stopEdit","",7);
-    if( isInEditMode() )
+    if( getEditModeFlag() )
     {
       try
       {
@@ -737,7 +737,7 @@ public class Repl extends ProjectionViewer
       partitionRegistry.add(getCurrentEditPartition());
       readOnlyPositions.clear();
       disconnectUndoManager();
-      setEditMode(false);
+      setEditModeFlag(false);
       setEditOffset(doc.getLength());
       logTrace("stopEdit: stop edit mode at offset = " 
           + String.valueOf(getEditOffset()),5);      
@@ -944,7 +944,7 @@ public class Repl extends ProjectionViewer
    */
   public void insertPartInEdit(int offset, String txt, PartitionData pd)
   {
-    if( !isInEditMode() || pd == null || txt == null || txt.length() != pd.length )
+    if( !getEditModeFlag() || pd == null || txt == null || txt.length() != pd.length )
     {
       return;
     }
@@ -1010,7 +1010,7 @@ public class Repl extends ProjectionViewer
   
   private void deletePartInEdit(PartitionData pd)
   {
-    if( !isInEditMode() || pd == null || !readOnlyPositions.containsKey(pd)
+    if( !getEditModeFlag() || pd == null || !readOnlyPositions.containsKey(pd)
         || editPartition.children == null 
         || !editPartition.children.contains(pd))
     {
