@@ -36,6 +36,7 @@ import org.eclipse.jface.text.Position;
  * 
  * <p><b>Usage:</b></p>
  * <b>TODO</b> Probably some API is open for other unintended ways.<br/>
+ * API will be extended to accommodate functionality necessary for slime style repl.
  * <p><b>Logging facility:</b> add listeners, if no listener of particular type is
  * added then prints to console, traces have level, by setting appropriate
  * variable we can say if we want trace to print, or set clear not to print
@@ -201,6 +202,19 @@ public class Repl extends ProjectionViewer
    * Start of editable part in edit mode. Undefined in read-only mode.
    */
   private int editOffset;
+  private void setEditOffset(int offset)
+  {
+    editOffset = offset;
+  }
+  /**
+   * @return starting offset of editing region
+   */
+  public int getEditOffset()
+  {
+    return editOffset;
+  }
+  
+  
   /**
    * Last edit context = Last prompt context + "." + this string
    */
@@ -241,7 +255,7 @@ public class Repl extends ProjectionViewer
     {
       try
       {
-        res = doc.get(editOffset, doc.getLength() - editOffset);
+        res = doc.get(getEditOffset(), doc.getLength() - getEditOffset());
       }
       catch(BadLocationException e)
       {
@@ -395,16 +409,16 @@ public class Repl extends ProjectionViewer
     {
       res = null;
     }
-    else if(offset > editOffset)
+    else if(offset > getEditOffset())
     {
       logTrace("getPartitionAt: editPartition",7);
       res = getCurrentEditPartition();
     }
-    else if( offset == editOffset && partitionResolutionFlag == NONE )
+    else if( offset == getEditOffset() && partitionResolutionFlag == NONE )
     {
       res = null;
     }
-    else if ( offset == editOffset && partitionResolutionFlag == AFTER )
+    else if ( offset == getEditOffset() && partitionResolutionFlag == AFTER )
     {
       res = getCurrentEditPartition();
     }
@@ -442,7 +456,7 @@ public class Repl extends ProjectionViewer
   {
     if( inEditMode )
     {
-      editPartition.length = doc.getLength() - editOffset;
+      editPartition.length = doc.getLength() - getEditOffset();
       if( editPartition.children != null )
       {
         for( PartitionData pdc : editPartition.children )
@@ -454,7 +468,7 @@ public class Repl extends ProjectionViewer
           }
           else
           {
-            pdc.start = pos.getOffset() - editOffset;            
+            pdc.start = pos.getOffset() - getEditOffset();            
           }
         }
       }
@@ -495,14 +509,6 @@ public class Repl extends ProjectionViewer
   }
 
   /**
-   * @return starting offset of editing region
-   */
-  public int getEditOffset()
-  {
-    return editOffset;
-  }
-
-  /**
    * @return <code>true</code> if in edit mode, or <code>false</code> otherwise
    */
   public boolean isInEditMode()
@@ -528,7 +534,7 @@ public class Repl extends ProjectionViewer
     iniUndoManager();
     disconnectUndoManager();
     inEditMode = false;
-    editOffset = 0;
+    setEditOffset(0);
     doc.addPositionUpdater(new DefaultPositionUpdater(READ_ONLY_CATEGORY));
     appendVerifyKeyListener(new VerifyKeyListener()/*ReadOnlyBackspaceDel(this)*/
     {
@@ -667,9 +673,9 @@ public class Repl extends ProjectionViewer
     appendText(prompt, promptContext, id, promptStyle, onNewLine);
     connectUndoManager();
     inEditMode = true;
-    editPartition = new PartitionData(editOffset,0,
+    editPartition = new PartitionData(getEditOffset(),0,
         promptContext+"."+EDIT_CONTEXT,id);
-    logTrace("startEdit: Start edit mode at offset = " + String.valueOf(editOffset)
+    logTrace("startEdit: Start edit mode at offset = " + String.valueOf(getEditOffset())
         + ", with prompt \"" + prompt + "\", and context \"" + promptContext
         + "\"",4);
     logTraceReturn("startEdit","",7);
@@ -728,9 +734,9 @@ public class Repl extends ProjectionViewer
       readOnlyPositions.clear();
       disconnectUndoManager();
       inEditMode = false;
-      editOffset = doc.getLength();
+      setEditOffset(doc.getLength());
       logTrace("stopEdit: stop edit mode at offset = " 
-          + String.valueOf(editOffset),5);      
+          + String.valueOf(getEditOffset()),5);      
     }
     else
     {
@@ -818,7 +824,7 @@ public class Repl extends ProjectionViewer
         }
         doc.replace(offset, 0, str);
         partitionRegistry.add(pd);
-        editOffset = doc.getLength();
+        setEditOffset(doc.getLength());
         applyPartitionStyles(0,pd);
       }
       catch(BadLocationException e)
@@ -867,7 +873,7 @@ public class Repl extends ProjectionViewer
   public PartitionData getReadOnlyPartition(int offset, 
       int partitionResolutionFlag)
   {
-    if( offset < editOffset )
+    if( offset < getEditOffset() )
     {
       return null;
     }
@@ -890,7 +896,7 @@ public class Repl extends ProjectionViewer
         }
         else if( offset0 < offset && offset < offset1 )
         {
-          pdc.start = offset0 - editOffset;
+          pdc.start = offset0 - getEditOffset();
           return pdc; 
         }
       }
@@ -901,7 +907,7 @@ public class Repl extends ProjectionViewer
           return null;
         } else if( offset0 < offset && offset <= offset1 )
         {
-          pdc.start = offset0 - editOffset;
+          pdc.start = offset0 - getEditOffset();
           return pdc;
         }
       }
@@ -913,7 +919,7 @@ public class Repl extends ProjectionViewer
         }
         else if(offset0 <= offset && offset < offset1 )
         {
-          pdc.start = offset0 - editOffset;
+          pdc.start = offset0 - getEditOffset();
           return pdc;
         }
       }
@@ -940,9 +946,9 @@ public class Repl extends ProjectionViewer
     }
     //get actual position where to insert
     int insoffset = offset;
-    if( offset < editOffset )
+    if( offset < getEditOffset() )
     {
-      insoffset = editOffset;
+      insoffset = getEditOffset();
     }
     else
     {
@@ -966,9 +972,9 @@ public class Repl extends ProjectionViewer
     //create new partition: cloning, since we don't want to conflict with
     //existing one when updating offsets
     PartitionData pdnew = pd.clone();
-    pdnew.start = insoffset - editOffset; //relative to start of editRegion
+    pdnew.start = insoffset - getEditOffset(); //relative to start of editRegion
     //apply styles
-    applyPartitionStyles(editOffset,pdnew);
+    applyPartitionStyles(getEditOffset(),pdnew);
     //add the partition to children
     if( editPartition.children == null )
     {
@@ -1050,7 +1056,7 @@ public class Repl extends ProjectionViewer
     partitionRegistry.clear();
     readOnlyPositions.clear();
     disconnectUndoManager();
-    editOffset = 0;
+    setEditOffset(0);
     try
     {
       doc.replace(0, doc.getLength(), "");
