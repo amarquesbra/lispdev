@@ -4,6 +4,8 @@
 package org.lispdev.test;
 
 import org.lispdev.views.ReplView;
+import org.lispdev.views.repl.PartitionData;
+import org.lispdev.views.repl.Repl;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
@@ -40,8 +42,30 @@ public class LispdevReplTest extends TestCase
   public void testReplPrint() throws PartInitException
   {
     ReplView view = (ReplView)getPage().showView(ReplView.ID);
+    view.repl.clear();
     view.repl.appendText("some text", "some context", 1,
         new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)},true);
+    // how to test: get partition at position 4 and check its text and
+    // style
+    PartitionData pd = view.repl.getPartitionAt(4, Repl.NONE);
+    assertEquals("some text",view.repl.getText(pd));
+    assertEquals("some context",pd.context);
+    assertEquals(SWT.BOLD,pd.originalStyle[0].fontStyle);
+    assertEquals(0,pd.originalStyle[0].start);
+    assertEquals(3,pd.originalStyle[0].length);
+    //TODO: need to implement compare partitions
+  }
+  
+  /**
+   * Test method for {@link org.lispdev.views.Repl#clear()}
+   */
+  public void testClear() throws PartInitException
+  {
+    ReplView view = (ReplView)getPage().showView(ReplView.ID);
+    view.repl.appendText("some text", "some context", 1,
+        new StyleRange[]{new StyleRange(0, 3, null, null, SWT.BOLD)},true);
+    view.repl.clear();
+    assertEquals("",view.repl.getDocument().get());
   }
   
 }
