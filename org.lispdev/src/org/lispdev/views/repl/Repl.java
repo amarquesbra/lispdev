@@ -317,7 +317,7 @@ public class Repl extends ProjectionViewer
 
     // process boundary cases
     if(partitionRegistry == null || partitionRegistry.get(from).start > offset
-        || partitionRegistry.get(to).start < offset)
+        || partitionRegistry.get(to).start + partitionRegistry.get(to).length < offset)
     {
       return -1;
     }
@@ -327,6 +327,11 @@ public class Repl extends ProjectionViewer
       return resolveBoundary(from,partitionResolutionFlag);
     }
     
+    if(partitionRegistry.get(to).start < offset)
+    {
+      return to;
+    }
+
     if(partitionRegistry.get(to).start == offset)
     {
       return resolveBoundary(to,partitionResolutionFlag);
@@ -734,7 +739,10 @@ public class Repl extends ProjectionViewer
       {
         logException("stopEdit: should never get here...",e);
       }
-      partitionRegistry.add(getCurrentEditPartition());
+      if( doc.getLength() > 0 )
+      {
+        partitionRegistry.add(getCurrentEditPartition());        
+      }
       readOnlyPositions.clear();
       disconnectUndoManager();
       setEditModeFlag(false);
@@ -1060,6 +1068,10 @@ public class Repl extends ProjectionViewer
     partitionRegistry.clear();
     readOnlyPositions.clear();
     disconnectUndoManager();
+    if(getEditModeFlag())
+    {
+      connectUndoManager();
+    }
     setEditOffset(0);
     try
     {
