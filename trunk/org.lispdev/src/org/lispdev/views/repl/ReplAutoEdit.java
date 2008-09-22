@@ -26,7 +26,7 @@ public class ReplAutoEdit implements IAutoEditStrategy
   public void customizeDocumentCommand(IDocument d, DocumentCommand c)
   {
     if( repl == null ) return;
-    if( !repl.isInEditMode() )
+    if( !repl.getEditModeFlag() )
     {
       repl.logWarning("Called Auto Edit command when repl is in read-only mode");
       return;
