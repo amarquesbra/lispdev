@@ -31,8 +31,149 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.jface.text.Position;
 
 /**
- * Console-like viewer with facilities to implement lisp repl similar to
- * slime-repl.
+ * <p>Console-like viewer with facilities to implement lisp repl similar to
+ * slime-repl.</p>
+ * 
+ * <p><b>Usage:</b></p>
+ * <b>TODO</b> Probably some API is open for other unintended ways.<br/>
+ * <p><b>Logging facility:</b> add listeners, if no listener of particular type is
+ * added then prints to console, traces have level, by setting appropriate
+ * variable we can say if we want trace to print, or set clear not to print
+ * (TODO: describe API better, but this is a minor point)</p>
+ * 
+ * <p>All text in Repl is related to a partition, which has context, id, etc.
+ * It is possible to append text without context, etc., but then it is in null 
+ * context</p>
+ * 
+ * <ul>
+ * <li/> Repl starts empty in read-only mode
+ * <li/> {@link #startEdit()} functions print prompt and switch Repl to edit mode.
+ * All editing is done within prompt context. Only text after prompt can
+ * be edited. It is possible to insert readOnly partitions in edit text
+ * (for example copy from Repl history). Use {@link #insertPartInEdit()} function.
+ * These partitions are read only and while editing behave like a single character
+ * (i.e. del and backspace removes whole partition).
+ * (TODO: also deal in similar way with copy-paste)
+ * <li/> {@link #stopEdit()} stops editing mode, rendering all just edited mode 
+ * read-only and collecting it in single partition. If called when Repl is
+ * in read-only mode doesn't do anything.
+ * <li/> {@link #appendText()} functions call stopEdit and then appends text
+ *  with given partition data
+ * <li/> undo works only in last editing region
+ * <li/> {@link #clear()} clears all Repl history, and puts it in read-only mode 
+ * (like when Repl starts)
+ * <li/> {@link #getPartitionAt()} returns partition at particular offset
+ * <li/> {@link #getEditText()} returns text that is currently being edited
+ * <li/> {@link #getText()} returns text given partition
+ * </ul>
+ * <p><b>Key listeners:</b> API provides special key listeners that are attached
+ * using standard appendVerifyKeyListener (prepend.. etc.) functions
+ * (from parent ProjectionViewer).
+ * Repl keyListener API facilitates a way of working with Repl partitions.
+ * It consists of two components: triggers and listeners.</p>
+ * <ul>
+ * <li/> Triggers: {@code ReplInputTrigger} - abstract class that implements
+ * VerifyKeyListener
+ * <li/> Listeners: {@code IReplInputListener}
+ * <li/> a trigger waits for key event for which it is registered and then calls
+ * all {@code IReplInputListeners} that are registered with it
+ * <li/> {@code ReplInputTrigger} is extended by specifying abstract {@code check}
+ * method, which checks for key combination which fires this trigger
+ * <li/> listeners are registered with trigger using function 
+ * {@code ReplInputTrigger#addInputListener}. When trigger is fired, 
+ * it calls all listeners in turn 
+ * (TODO: should make listeners return boolean and stop at first true (handled))
+ * <li/> One implementation of trigger is provided by {@code ReplEnterTrigger}
+ * <li/> Example implementation of listener: {@code ReplEchoListener}
+ * </ul>
+ * 
+ * <p><b>Example:</b></p>
+ * <pre>
+
+package org.lispdev.views;
+
+import org.lispdev.views.repl.Repl;
+import org.lispdev.views.repl.ReplEchoListener;
+import org.lispdev.views.repl.ReplEnterTrigger;
+import org.lispdev.views.repl.ReplInputTrigger;
+
+import org.eclipse.jface.text.source.VerticalRuler;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.ui.part.ViewPart;
+
+public class ReplView extends ViewPart
+{
+  public static final String ID = "test.replView";
+
+  public Repl repl;
+  private Label info;
+
+  
+  @Override
+  public void createPartControl(Composite parent) {
+    GridLayout layout = new GridLayout(1, false);
+    layout.marginLeft = 1;
+    layout.marginTop = 1;
+    layout.marginRight = 1;
+    layout.marginBottom = 1;
+    parent.setLayout(layout);
+    
+    GridData gd;
+    
+    info = new Label(parent, SWT.BORDER);
+    gd = new GridData();
+    gd.horizontalAlignment = GridData.FILL;
+    gd.grabExcessHorizontalSpace = true;
+    gd.grabExcessVerticalSpace = false;
+    info.setLayoutData(gd);
+    info.setText("Status label for Repl");
+
+    // Put a border around our text viewer
+    Composite comp = new Composite(parent, SWT.BORDER);
+    layout = new GridLayout(1, false);
+    layout.marginLeft = 0;
+    layout.marginTop = 0;
+    layout.marginRight = 0;
+    layout.marginBottom = 0;
+    layout.horizontalSpacing = 0;
+    layout.marginHeight = 0;
+    layout.marginWidth = 0;
+    comp.setLayout(layout);
+    gd = new GridData();
+    gd.horizontalAlignment = GridData.FILL;
+    gd.verticalAlignment = GridData.FILL;
+    gd.grabExcessHorizontalSpace = true;
+    gd.grabExcessVerticalSpace = true;
+    comp.setLayoutData(gd);
+    
+    repl = new Repl(comp, new VerticalRuler(10), 
+        SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
+    repl.getControl().setLayoutData(gd);
+    //repl.getTextWidget().setFont(newFont);
+
+    ReplInputTrigger it = new ReplEnterTrigger(repl,SWT.NONE,Repl.BEFORE);
+    ReplEchoListener echo = new ReplEchoListener(repl);
+    it.addInputListener(echo);
+    repl.appendVerifyKeyListener(it);
+    repl.startEdit("start>", "this prompt",0,
+        new StyleRange[]{new StyleRange(0, "start>".length(),
+            null, null, SWT.BOLD)},false);
+
+  }
+
+  @Override
+  public void setFocus()
+  {
+  }
+
+}
+ * </pre>
+ * 
  * 
  * @author sk
  * 
@@ -720,6 +861,8 @@ public class Repl extends ProjectionViewer
    * Otherwise returns <code>null</code>
    * @param offset - checks for read-only partition here
    * @param partitionResolutionFlag - NONE, BEFORE, AFTER
+   * - this is used in functions internal to Repl, so should not be actually
+   * public 
    */
   public PartitionData getReadOnlyPartition(int offset, 
       int partitionResolutionFlag)
@@ -855,7 +998,7 @@ public class Repl extends ProjectionViewer
     getTextWidget().setCaretOffset(insoffset+pdnew.length);
   }
   
-  public void deletePartInEdit(PartitionData pd)
+  private void deletePartInEdit(PartitionData pd)
   {
     if( !inEditMode || pd == null || !readOnlyPositions.containsKey(pd)
         || editPartition.children == null 
