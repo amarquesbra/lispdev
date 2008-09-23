@@ -16,7 +16,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
@@ -36,7 +35,9 @@ public class ReplView extends ViewPart
 
   
   @Override
-  public void createPartControl(Composite parent) {
+  public void createPartControl(Composite parent)
+  {
+    LispdevPlugin.getDefault().setReplView(this);
     GridLayout layout = new GridLayout(1, false);
     layout.marginLeft = 1;
     layout.marginTop = 1;
@@ -78,10 +79,10 @@ public class ReplView extends ViewPart
     repl.getControl().setLayoutData(gd);
     //repl.getTextWidget().setFont(newFont);
 
-    ReplInputTrigger it = new ReplEnterTrigger(repl,SWT.NONE,Repl.BEFORE);
+    ReplInputTrigger inputTrigger = new ReplEnterTrigger(repl,SWT.NONE,Repl.BEFORE);
     ReplEchoListener echo = new ReplEchoListener(repl);
-    it.addInputListener(echo);
-    repl.appendVerifyKeyListener(it);
+    inputTrigger.addInputListener(echo);
+    repl.appendVerifyKeyListener(inputTrigger);
     repl.startEdit("start>", "this prompt","0",
         new StyleRange[]{new StyleRange(0, "start>".length(),
             null, null, SWT.BOLD)},false);
@@ -98,20 +99,26 @@ public class ReplView extends ViewPart
     repl.setCaretToEnd();
   }
 
-  static public ReplView showReplView() {
-    IWorkbench workbench= PlatformUI.getWorkbench();
-    IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
-    ReplView rv = null;
-    
-    try
-    {
-      rv = (ReplView)window.getActivePage().showView(ReplView.ID);
-    }
-    catch(PartInitException e)
-    {
-    }
-    return rv;
+  static public void show() 
+  {
+    PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+      public void run()
+      {
+        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        if( window == null )
+          return;
+        IWorkbenchPage page = window.getActivePage();
+        if (page == null)
+          return;
+        try
+        {
+          page.showView(ReplView.ID);
+        }
+        catch(PartInitException e)
+        {
+          e.printStackTrace();
+        }
+        
+      }});
   }
-
-  
 }
