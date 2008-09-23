@@ -6,12 +6,12 @@ import org.eclipse.osgi.service.environment.Constants;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.lispdev.views.ReplView;
 import org.osgi.framework.BundleContext;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
 
-import java.io.IOException;
 import java.io.*;
 import java.util.*;
 
@@ -32,6 +32,16 @@ public class LispdevPlugin extends AbstractUIPlugin
   public static final String CL_FLAVOR_SBCL = "SBCL";
   public static final String CL_FLAVOR_CLISP = "CLISP";
   public static final String[] CL_FLAVORS = new String[]{CL_FLAVOR_SBCL, CL_FLAVOR_CLISP};
+  
+  private ReplView replView = null;
+  public void setReplView(ReplView replView)
+  {
+    this.replView = replView;
+  }
+  public ReplView getReplView()
+  {
+    return replView;
+  }
 
   // tracing. More natural place would be LispdevDebug, but I want to keep
   // functions in LispdevDebug static
