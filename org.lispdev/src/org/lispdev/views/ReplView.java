@@ -82,7 +82,8 @@ public class ReplView extends ViewPart
     ReplInputTrigger inputTrigger = new ReplEnterTrigger(repl,SWT.NONE,Repl.BEFORE);
     ReplEchoListener echo = new ReplEchoListener(repl);
     inputTrigger.addInputListener(echo);
-    repl.appendVerifyKeyListener(inputTrigger);
+    //repl.appendVerifyKeyListener(inputTrigger);
+    repl.getTextWidget().addVerifyKeyListener(inputTrigger);
     repl.startEdit("start>", "this prompt","0",
         new StyleRange[]{new StyleRange(0, "start>".length(),
             null, null, SWT.BOLD)},false);
