@@ -118,24 +118,45 @@ public class PartitionData
     return res;
   }
   
-  public static boolean equal(PartitionData pd1, PartitionData pd2)
+  private boolean styleRangesSanityCheck(StyleRange[] sr)
   {
-    if( pd1 == null && pd2 == null )
+    if( sr == null )
       return true;
-    if( pd1 == null && pd2 != null )
+    for( StyleRange st: sr )
+    {
+      if(st.start >= length)
+        return false;
+      if(st.start + st.length > start + length)
+        return false;
+    }
+    return true;
+  }
+  
+  public boolean sanityCheck()
+  {
+    if( length <= 0 )
       return false;
-    if( pd1 != null && pd2 == null ) 
+    if( !styleRangesSanityCheck(originalStyle) )
       return false;
-    //now both are not null
-    if( pd1.start != pd2.start )
+    if( !styleRangesSanityCheck(mouseOverStyle) )
       return false;
-    if( pd1.length != pd2.length )
+    if( !styleRangesSanityCheck(mouseOverCtrlStyle) )
       return false;
-    if( pd1.context != null && !pd1.context.equals(pd2.context))
-      return false;
-    if( pd1.context == null && pd2.context != null )
-      return false;
-    
+    if( children != null )
+    {
+      for( PartitionData pd : children )
+      {
+        if( pd != null )
+        {
+          if( pd.start >= length )
+            return false;
+          if( pd.start + pd.length > start + length )
+            return false;
+          if( !pd.sanityCheck() )
+            return false;          
+        }
+      }
+    }
     return true;
   }
   

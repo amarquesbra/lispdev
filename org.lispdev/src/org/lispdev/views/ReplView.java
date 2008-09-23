@@ -16,6 +16,11 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 /**
@@ -89,8 +94,24 @@ public class ReplView extends ViewPart
   @Override
   public void setFocus()
   {
-    // TODO Auto-generated method stub
-
+    repl.getTextWidget().setFocus();
+    repl.setCaretToEnd();
   }
 
+  static public ReplView showReplView() {
+    IWorkbench workbench= PlatformUI.getWorkbench();
+    IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
+    ReplView rv = null;
+    
+    try
+    {
+      rv = (ReplView)window.getActivePage().showView(ReplView.ID);
+    }
+    catch(PartInitException e)
+    {
+    }
+    return rv;
+  }
+
+  
 }

@@ -634,6 +634,16 @@ public class Repl extends ProjectionViewer
     });
   }
 
+  public void setCaret(int offset)
+  {
+    setSelectedRange(Math.min(offset, doc.getLength()), 0);
+  }
+  
+  public void setCaretToEnd()
+  {
+    setCaret(doc.getLength());
+  }
+  
   /**
    * Handles disconnection of undo manager (to prevent collecting undo
    * operations when editor is not in editing mode)
@@ -718,6 +728,46 @@ public class Repl extends ProjectionViewer
             background,fontStyle)},onNewLine);
     getTextWidget().setCaretOffset(getDocument().getLength());
     logTraceEntry("startEdit","",7);
+  }
+  
+  
+  /**
+   * Checks that all text is partitioned
+   * and partitions and styles do not overlap.
+   * @return if pass sanity check.
+   */
+  public boolean sanityCheck()
+  {
+    if( doc.getLength() == 0 )
+    {
+      if(partitionRegistry != null && partitionRegistry.size() > 0)
+        return false;
+      else
+        return true;
+    }
+    if(partitionRegistry == null || partitionRegistry.size() == 0)
+      return false;
+    int offset = 0;
+    for( PartitionData pd : partitionRegistry )
+    {
+      if( pd.start != offset )
+        return false;
+      if( pd.length + pd.start > doc.getLength() )
+        return false;
+      offset = pd.start + pd.length;
+    }
+    if( getEditModeFlag() )
+    {
+      if( offset != getEditOffset() )
+        return false;
+    }
+    else
+    {
+      if( offset != doc.getLength() )
+        return false;
+    }
+    
+    return true;
   }
   
   /**
