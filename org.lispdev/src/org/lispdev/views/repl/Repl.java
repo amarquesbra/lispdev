@@ -596,18 +596,48 @@ public class Repl extends ProjectionViewer
         else //selection > 0, delete selection and read only if any overlap
         {
           PartitionData pdx = getReadOnlyPartition(sel.x, Repl.AFTER);
-          if( pdx != null )          
+          if( pdx != null )
           {
             sel.x = getEditOffset() + pdx.start;
+            sel.y -= pdx.length;
+            deletePartInEdit(pdx);
+            if( sel.x >= sel.y )
+            {
+              return;
+            }
           }
           PartitionData pdy = getReadOnlyPartition(sel.y, Repl.BEFORE);
           if( pdy != null )
           {
-            sel.y = getEditOffset() + pdy.start + pdy.length;
+            sel.y = getEditOffset() + pdy.start;
+            deletePartInEdit(pdy);
+            if( sel.x >= sel.y )
+            {
+              return;
+            }
+          }
+          // test if more partitions to delete
+          int i = sel.x;
+          while( i < sel.y )
+          {
+            PartitionData pd = getReadOnlyPartition(i,Repl.AFTER);
+            if( pd != null )
+            {
+              sel.y -= pd.length;
+              deletePartInEdit(pd);
+            }
+            else
+            {
+              ++i;
+            }
+          }
+          if( sel.x >= sel.y )
+          {
+            return;
           }
           getTextWidget().setSelection(sel.x,sel.y);
         }
-        return;    
+        return;
       }
       
     });
