@@ -25,14 +25,11 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
   public void testBasicReplTest() throws Exception 
   {
   
-    // ====== on eclipse start dismiss welcome screen 
-    trace("starting\n");
+    trace(" ====== on eclipse start dismiss welcome screen \n"); 
     bot.menu("Help").menu("Dynamic Help").click();
-    trace("Clicked Help->Dynamic Help");
 
-    // ====== open repl view via Show View menu
+    trace(" ====== open repl view via Show View menu \n");
     bot.menu("Window").menu("Show View").menu("Other...").click();
-    trace("Clicked Window->Show View->Other...\n");
     
     bot.sleep(150);
     bot.tree().setFocus();
@@ -51,9 +48,8 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     /*
     ReplView.show();
     */
-    trace("Repl View is shown now\n");
-    
-    // ====== check repl startup and get necessary handles
+
+    trace(" ====== check repl startup and get necessary handles\n");
     ReplView rv = LispdevPlugin.getDefault().getReplView();
     trace("Repl view = "+rv+"\n");
     if(rv == null)
@@ -62,17 +58,15 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
       return;
     }
     SWTBotStyledText rtxt = bot.styledText("start>");
-    trace("Repl text = "+rtxt+"\n");
     
     assertEquals("start>",rtxt.getText());
     assertTrue(rv.repl.sanityCheck());
     
-    // ===== simple typing test    
+    trace(" ===== simple typing test\n");    
     rtxt.typeText("123");
     assertEquals("123",rv.repl.getEditText());
     
-    // ===== testing enter trigger which stops edit mode
-    trace("Sending <enter>\n");
+    trace(" ===== testing enter trigger which stops edit mode\n");
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
     // edit text became read only, echo line is printed,
     // new prompt is printed, in edit mode
@@ -88,7 +82,7 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     assertEquals("Printed: \"123\", in context: " +
     		"\"this prompt._edit_context__\", with id 0",rv.repl.getText(pd));
     
-    // ====== try to type on first line third column (read only part)
+    trace(" ===== try to type on first line third column (read only part)\n");
     rtxt.typeText(1, 3, "abc");
     // partitions shouldn't be destroyed, text should appear in edit region
     assertTrue(rv.repl.sanityCheck());
@@ -96,14 +90,14 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     assertEquals("start>", rv.repl.getText(pd));
     assertEquals("abc", rv.repl.getEditText());
     
-    // ====== add read-only based on last edit region
+    trace(" ===== add read-only based on last edit region\n");
     rtxt.selectRange(0, 7, 0);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
     assertTrue(rv.repl.sanityCheck());
     assertTrue(rv.repl.getEditModeFlag());
     assertEquals("abc123", rv.repl.getEditText());
     
-    // ====== more advanced test with read-only partitions in edit region
+    trace(" ===== more advanced test with read-only partitions in edit region\n");
     //- move caret to start put one character (to move read-only)
     //- add read only again (same 123) - now have two read-only ranges
     //next to each other
@@ -115,25 +109,85 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     rtxt.typeText(2, 10, "--");
     assertEquals("+abc123--123", rv.repl.getEditText());
     
-    // ===== del before read-only
+    trace(" ===== del before read-only\n");
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.DEL, SWT.DEL);
     assertEquals("+abc123--", rv.repl.getEditText());
     
-    // ===== del after read-only
+    trace(" ===== del after read-only\n");
     rtxt.selectRange(2,12,0);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.DEL, SWT.DEL);
     assertEquals("+abc123-",rv.repl.getEditText());
     
-    // ===== backspace before read-only
+    trace(" ===== backspace before read-only\n");
     rtxt.selectRange(2, 9, 0);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
     assertEquals("+ab123-",rv.repl.getEditText());
 
-    // ===== backspace after read-only
+    trace(" ===== backspace after read-only\n");
     rtxt.selectRange(2, 11, 0);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
-    assertEquals("+ab", rv.repl.getEditText());
-    bot.sleep(2000);
+    assertEquals("+ab-", rv.repl.getEditText());
+    
+    trace(" ===== put read-only again and then hit <enter>\n");
+    // check how new partition is created
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+    assertTrue(rv.repl.sanityCheck());
+    
+    trace(" ===== if selection is partially on promt, delete just editable part\n");
+    rtxt.typeText("123");
+    rtxt.selectRange(4, 2, 4);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
+    assertEquals("23",rv.repl.getEditText());
+    
+    trace(" ===== if selection covers read-only delete it\n");
+    rtxt.typeText("-");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    rtxt.typeText("-");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    rtxt.typeText("-");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    rtxt.typeText("+++");
+    rtxt.selectRange(4, 2, 18);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
+    assertEquals("++",rv.repl.getEditText());
+    assertTrue(rv.repl.sanityCheck());
+    
+    trace(" ===== if selection intersects read-only delete it\n");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    rtxt.typeText("-");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    rtxt.typeText("-");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    rtxt.typeText("+++");
+    rtxt.selectRange(4, 8, 8);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
+    assertEquals("+++++",rv.repl.getEditText());
+    assertTrue(rv.repl.sanityCheck());
+    
+    /*
+     * TODO: more tests
+     * - bug: when undo - read only is destroyed (redo should put it back)
+     * - copy-paste? (just copy-paste text, drop even formating)?
+     * - bug: if part of read-only is selected and hit del - get exception - fixed
+     * - make read only editable? (use copy paste)
+     * - mouse events
+     * - when select all and hit delete, need to remove read only partitions
+     * from registry - to test, edit: put some test, then read-only, then
+     * again text, select text around read-only and delete, place where
+     * read-only was located still looks like read-only, also test partial
+     * overlapping of some and complete overlapping of all
+     */
+    
+    
+    bot.sleep(500);
     
   }
 		  
