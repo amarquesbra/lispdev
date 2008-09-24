@@ -27,6 +27,7 @@ import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.jface.text.Position;
 
@@ -549,32 +550,64 @@ public class Repl extends ProjectionViewer
     {
       public void verifyKey(VerifyEvent event)
       {
-        int offset = getTextWidget().getCaretOffset();
-        if( !getEditModeFlag() || offset < getEditOffset())
+        if( !(event.keyCode == SWT.DEL || event.keyCode == SWT.BS) 
+            || !getEditModeFlag())
         {
           return;
         }
-        if( event.keyCode == SWT.DEL )
+        Point sel = getTextWidget().getSelection();
+        if(sel.x < getEditOffset())
         {
-          PartitionData pd = getReadOnlyPartition(offset, Repl.AFTER);
-          if( pd != null )
+          if( sel.y <= getEditOffset() )
           {
-            deletePartInEdit(pd);
-            event.doit = false;
+            return;
           }
-          return;
+          getTextWidget().setSelection(getEditOffset(), sel.y);
+          sel.x = getEditOffset();
         }
-        if( event.keyCode == SWT.BS )
+        sel.x = Math.max(sel.x, getEditOffset());
+        if( sel.x > sel.y )
         {
-          PartitionData pd = getReadOnlyPartition(offset, Repl.BEFORE);
-          if( pd != null )
-          {
-            deletePartInEdit(pd);
-            event.doit = false;
-          }
           return;
         }
-        return;        
+        if( sel.x == sel.y )
+        {
+          if( event.keyCode == SWT.DEL )
+          {
+            PartitionData pd = getReadOnlyPartition(sel.x, Repl.AFTER);
+            if( pd != null )
+            {
+              deletePartInEdit(pd);
+              event.doit = false;
+            }
+            return;
+          }
+          if( event.keyCode == SWT.BS )
+          {
+            PartitionData pd = getReadOnlyPartition(sel.x, Repl.BEFORE);
+            if( pd != null )
+            {
+              deletePartInEdit(pd);
+              event.doit = false;
+            }
+            return;
+          }          
+        }
+        else //selection > 0, delete selection and read only if any overlap
+        {
+          PartitionData pdx = getReadOnlyPartition(sel.x, Repl.AFTER);
+          if( pdx != null )          
+          {
+            sel.x = getEditOffset() + pdx.start;
+          }
+          PartitionData pdy = getReadOnlyPartition(sel.y, Repl.BEFORE);
+          if( pdy != null )
+          {
+            sel.y = getEditOffset() + pdy.start + pdy.length;
+          }
+          getTextWidget().setSelection(sel.x,sel.y);
+        }
+        return;    
       }
       
     });
