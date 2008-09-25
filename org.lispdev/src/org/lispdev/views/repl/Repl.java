@@ -262,7 +262,7 @@ public class Repl extends ProjectionViewer
    */
   public String getEditText()
   {
-    logTraceEntry("getEditText","",7);
+    logTraceEntry("",7);
     String res = null;
     if(getEditModeFlag())
     {
@@ -275,7 +275,7 @@ public class Repl extends ProjectionViewer
         logException("getEditText(): Failed", e);
       }
     }
-    logTraceReturn("getEditText",res,7);
+    logTraceReturn(res,7);
     return res;
   }
 
@@ -414,7 +414,7 @@ public class Repl extends ProjectionViewer
    */
   public PartitionData getPartitionAt(int offset, int partitionResolutionFlag)
   {
-    logTraceEntry("getPartitionAt",String.valueOf(offset),5);
+    logTraceEntry(String.valueOf(offset),5);
     PartitionData res;
     // first check boundary conditions
     if( (partitionResolutionFlag == BEFORE || partitionResolutionFlag == NONE) &&
@@ -462,7 +462,7 @@ public class Repl extends ProjectionViewer
         logTrace("getPartitionAt: found partition",7);
       }
     }
-    logTraceReturn("getPartitionAt",String.valueOf(res),5);
+    logTraceReturn(String.valueOf(res),5);
     return res;
   }
 
@@ -504,7 +504,7 @@ public class Repl extends ProjectionViewer
    */
   public String getText(PartitionData p)
   {
-    logTraceEntry("getText",String.valueOf(p),7);    
+    logTraceEntry(String.valueOf(p),7);    
     String res = null;
     if(p == null && doc == null)
     {
@@ -522,7 +522,7 @@ public class Repl extends ProjectionViewer
         logException("Could not get text for partition", e);
       }      
     }
-    logTraceReturn("getText",res,7);
+    logTraceReturn(res,7);
     return res;
   }
 
@@ -745,7 +745,7 @@ public class Repl extends ProjectionViewer
   public void startEdit(String prompt, String promptContext, String id,
       StyleRange[] promptStyle, boolean onNewLine)
   {
-    logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
+    logTraceEntry("\""+prompt+"\",\""+promptContext
         +"\","+String.valueOf(promptStyle),7);
     if( getEditModeFlag() )
     {
@@ -757,10 +757,10 @@ public class Repl extends ProjectionViewer
     setEditModeFlag(true);
     editPartition = new PartitionData(getEditOffset(),0,
         promptContext+"."+EDIT_CONTEXT,id);
-    logTrace("startEdit: Start edit mode at offset = " + String.valueOf(getEditOffset())
+    logTrace("startEdit: at offset = " + String.valueOf(getEditOffset())
         + ", with prompt \"" + prompt + "\", and context \"" + promptContext
         + "\"",4);
-    logTraceReturn("startEdit","",7);
+    logTraceReturn("",7);
   }
 
 
@@ -782,7 +782,7 @@ public class Repl extends ProjectionViewer
   public void startEdit(String prompt, String promptContext, String id,
       Color foreground, Color background, int fontStyle, boolean onNewLine)
   {
-    logTraceEntry("startEdit","\""+prompt+"\",\""+promptContext
+    logTraceEntry("\""+prompt+"\",\""+promptContext
         +"\","+String.valueOf(foreground)+","+String.valueOf(background)
         +","+String.valueOf(fontStyle)+","+String.valueOf(onNewLine),5);
     String pr = prompt;
@@ -790,7 +790,7 @@ public class Repl extends ProjectionViewer
         new StyleRange[]{new StyleRange(0,pr.length(),foreground,
             background,fontStyle)},onNewLine);
     getTextWidget().setCaretOffset(getDocument().getLength());
-    logTraceEntry("startEdit","",7);
+    logTraceEntry("",7);
   }
   
   
@@ -838,7 +838,7 @@ public class Repl extends ProjectionViewer
    */
   public void stopEdit()
   {
-    logTraceEntry("stopEdit","",7);
+    logTraceEntry("",7);
     if( getEditModeFlag() )
     {
       try
@@ -867,7 +867,7 @@ public class Repl extends ProjectionViewer
     {
       logTrace("stopEdit: called stopEdit in read-only mode",5);
     }
-    logTraceReturn("stopEdit","",7);
+    logTraceReturn("",7);
   }
   
   /**
@@ -904,7 +904,7 @@ public class Repl extends ProjectionViewer
    */
   public void appendText(String str, PartitionData data, boolean onNewLine)
   {
-    logTraceEntry("appendText","\""+str+"\","+String.valueOf(data)
+    logTraceEntry("\""+str+"\","+String.valueOf(data)
         +","+String.valueOf(onNewLine),7);
     stopEdit();
     if(doc != null)
@@ -919,14 +919,13 @@ public class Repl extends ProjectionViewer
       {
         if(!quietTrace)
         {
-          if(str.length() > 70)
+          if(str.length() > 80)
           {
-            traceMsg += ", printing:\n====\n" + str
-                + "\n===\n";
+            traceMsg += ", printing:\n" + str + "\n";
           }
           else
           {
-            traceMsg += ", printing \"" + str + "\"";
+            traceMsg += ", printing: " + str;
           }
         }
         if( onNewLine )
@@ -964,7 +963,7 @@ public class Repl extends ProjectionViewer
     {
       logWarning("appendText: Tried to print to uninitialized Repl");
     }
-    logTraceReturn("appendText","",7);
+    logTraceReturn("",7);
   }
 
   /**
@@ -979,11 +978,11 @@ public class Repl extends ProjectionViewer
   public void appendText(String str, String context, String id,
       StyleRange[] styles, boolean onNewLine)
   {
-    logTraceEntry("appendText","\""+str+"\",\""+context+"\","
+    logTraceEntry("\""+str+"\",\""+context+"\","
         +String.valueOf(styles),7);
     appendText(str, new PartitionData(0, str.length(), context, id, styles),
         onNewLine);
-    logTraceReturn("appendText","",7);
+    logTraceReturn("",7);
   }
 
   /**
@@ -1165,7 +1164,7 @@ public class Repl extends ProjectionViewer
    */
   public void clear()
   {
-    logTraceEntry("clear","",7);
+    logTraceEntry("",7);
     
     try
     {
@@ -1194,7 +1193,7 @@ public class Repl extends ProjectionViewer
     {
       logException("clear: should never end up here",e);
     }
-    logTraceReturn("clear","",7);
+    logTraceReturn("",7);
   }
   
   /*
@@ -1283,6 +1282,18 @@ public class Repl extends ProjectionViewer
     eListeners.add(log);
   }
 
+  private String getLocation()
+  {
+    StackTraceElement ste = Thread.currentThread().getStackTrace()[3];
+    return "("+ste.getFileName()+":"
+        +String.valueOf(ste.getLineNumber())+")";    
+  }
+  
+  private String methodName()
+  {
+    return Thread.currentThread().getStackTrace()[3].getMethodName();
+  }
+  
   /**
    * Log info message. Used internally. Notifies log listeners.
    * 
@@ -1293,14 +1304,14 @@ public class Repl extends ProjectionViewer
   {
     if(quietInfo)
       return;
-
+    String txt = getLocation() + " "+msg;
     if(infoListeners == null)
-      System.out.print("Repl info:\n  " + msg + "\n");
+      System.out.print(txt + "\n");
     else
     {
       for(ILogListener ll : infoListeners)
       {
-        ll.log(msg);
+        ll.log(txt);
       }
     }
   }
@@ -1315,13 +1326,14 @@ public class Repl extends ProjectionViewer
   {
     if(quietWarn)
       return;
+    String txt = getLocation() + " "+msg;
     if(warnListeners == null)
-      System.err.print("Repl warning:\n  " + msg + "\n");
+      System.err.print(txt + "\n");
     else
     {
       for(ILogListener ll : warnListeners)
       {
-        ll.log(msg);
+        ll.log(txt);
       }
     }
   }
@@ -1336,13 +1348,14 @@ public class Repl extends ProjectionViewer
   {
     if(quietErr)
       return;
+    String txt = getLocation() + " "+msg;
     if(errListeners == null)
-      System.err.print("Repl error:\n  " + msg + "\n");
+      System.err.print(txt + "\n");
     else
     {
       for(ILogListener ll : errListeners)
       {
-        ll.log(msg);
+        ll.log(txt);
       }
     }
   }
@@ -1357,25 +1370,36 @@ public class Repl extends ProjectionViewer
   {
     if(quietTrace || lvl >= trace_level)
       return;
+    String txt = getLocation() + " "+msg;
     if(traceListeners == null)
-      System.out.print("Repl trace:\n  " + msg + "\n");
+      System.out.print(txt + "\n");
     else
     {
       for(ILogListener ll : traceListeners)
       {
-        ll.log(msg);
+        ll.log(txt);
       }
     }
   }
   
   /**
    * Convenience method to trace function entry.
-   * @param name
    * @param params
    */
-  public void logTraceEntry(String name, String params, int lvl)
+  public void logTraceEntry(String params, int lvl)
   {
-    logTrace("->"+name+"("+params+")",lvl);
+    if(quietTrace || lvl >= trace_level)
+      return;
+    String txt = getLocation() + " ->"+methodName()+"("+params+")";
+    if(traceListeners == null)
+      System.out.print(txt + "\n");
+    else
+    {
+      for(ILogListener ll : traceListeners)
+      {
+        ll.log(txt);
+      }
+    }
   }
 
   /**
@@ -1383,9 +1407,20 @@ public class Repl extends ProjectionViewer
    * @param name
    * @param ret
    */
-  public void logTraceReturn(String name, String ret, int lvl)
+  public void logTraceReturn(String ret, int lvl)
   {
-    logTrace("<-"+name+"("+ret+")",lvl);
+    if(quietTrace || lvl >= trace_level)
+      return;
+    String txt = getLocation() + " <-"+methodName()+"("+ret+")";
+    if(traceListeners == null)
+      System.out.print(txt + "\n");
+    else
+    {
+      for(ILogListener ll : traceListeners)
+      {
+        ll.log(txt);
+      }
+    }
   }
 
   /**
@@ -1398,16 +1433,17 @@ public class Repl extends ProjectionViewer
    */
   public void logException(String msg, Throwable e)
   {
+    String txt = getLocation() + " "+msg;
     if(eListeners == null)
     {
-      System.err.print("Repl exception:\n  " + msg + "\n");
+      System.err.print(txt + "\n");
       e.printStackTrace();
     }
     else
     {
       for(ILogExceptionListener ll : eListeners)
       {
-        ll.log(msg, e);
+        ll.log(txt, e);
       }
     }
   }
