@@ -176,6 +176,43 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     assertEquals("+++++",rv.repl.getEditText());
     assertTrue(rv.repl.sanityCheck());
     
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    assertTrue(rv.repl.sanityCheck());
+
+    trace(" ===== Bug#5: When I press backspace it works like delete");
+    rtxt.typeText("123");
+    rtxt.selectRange(6, 6, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
+    assertEquals("23",rv.repl.getEditText());
+    
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    assertTrue(rv.repl.sanityCheck());
+
+    trace(" ===== Bug#6: Read only is not deleted, when select and start typing");
+    rtxt.typeText("abc");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+    rtxt.typeText("---");
+    rtxt.selectRange(8,7,5);
+    rtxt.typeText("aa");
+    assertEquals("abaa--",rv.repl.getEditText());
+    
+
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
+    assertTrue(rv.repl.sanityCheck());
+
+    trace(" ===== Bug#6: (case 2) Read only is not" +
+    		" deleted, when select and start typing");
+    rtxt.typeText("abc");
+    rtxt.selectRange(0, 7, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+    rtxt.typeText("---");
+    rtxt.selectRange(10,7,2);
+    rtxt.typeText("a");
+    assertEquals("aba---",rv.repl.getEditText());
+    
     /*
      * TODO: more tests
      * - bug: when undo - read only is destroyed (redo should put it back)
