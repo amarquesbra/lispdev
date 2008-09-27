@@ -562,6 +562,7 @@ public class Repl extends ProjectionViewer
         {
           return;
         }
+        // adjust selection to be in editable region 
         Point sel = getTextWidget().getSelection();
         if(sel.x < getEditOffset())
         {
@@ -577,6 +578,7 @@ public class Repl extends ProjectionViewer
         {
           return;
         }
+        // nothing is selected
         if( sel.x == sel.y )
         {
           if( event.keyCode == SWT.DEL )
@@ -591,6 +593,11 @@ public class Repl extends ProjectionViewer
           }
           if( event.keyCode == SWT.BS )
           {
+            if( sel.x == getEditOffset() )
+            {
+              event.doit = false;
+              return;
+            }
             PartitionData pd = getReadOnlyPartition(sel.x, Repl.BEFORE);
             if( pd != null )
             {
