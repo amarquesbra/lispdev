@@ -84,7 +84,7 @@ public abstract class ReplInputTrigger implements VerifyKeyListener
       //repl.SHIFT_RIGHT
       //repl.UNDO
 
-      repl.logErr("Partition data for event at "+String.valueOf(offset)
+      repl.logError("Partition data for event at "+String.valueOf(offset)
           +" does not exist, although whole document supposed to be partitioned");
       return;
     }

@@ -247,9 +247,16 @@ public class Repl extends ProjectionViewer
   private List<PartitionData> partitionRegistry;
   /**
    * Hold style and other information of current (if in edit mode),
-   * or last (if in read-only mode) edit region.
+   * or last (if in read-only mode) edit region. In edit mode
+   * each time this partition is accessed all offsets
+   * in this partition should be updated using {@code readOnlyPositions}
+   * hash map.
    */
   private PartitionData editPartition;
+  
+  /**
+   * Positions hold offsets associated with partition data.
+   */
   private HashMap<PartitionData,Position> readOnlyPositions;
   private String READ_ONLY_CATEGORY = "repl.read.only.position.category";
   
@@ -482,7 +489,7 @@ public class Repl extends ProjectionViewer
           Position pos = readOnlyPositions.get(pdc);
           if( pos == null )
           {
-            logErr("getCurrentEditPartition: pos == null");
+            logError("getCurrentEditPartition: pos == null");
           }
           else
           {
@@ -797,37 +804,195 @@ public class Repl extends ProjectionViewer
   /**
    * Checks that all text is partitioned
    * and partitions and styles do not overlap.
-   * @return if pass sanity check.
+   * @return true if pass sanity check.
    */
   public boolean sanityCheck()
   {
     if( doc.getLength() == 0 )
-    {
+    { 
+      //empty document but some partitions
       if(partitionRegistry != null && partitionRegistry.size() > 0)
-        return false;
+      {
+        logError("Empty Repl, but nonempty partition list");
+        return false;        
+      }
       else
-        return true;
+      {
+        return true;        
+      }
     }
+    // document is non empty, but no partitions
     if(partitionRegistry == null || partitionRegistry.size() == 0)
+    {
+      //FIXME: assumes that always starts with prompt
+      logError("Empty Repl, but no partitions.");
       return false;
+    }
     int offset = 0;
     for( PartitionData pd : partitionRegistry )
     {
       if( pd.start != offset )
-        return false;
+      {
+        logError("Gap between partitions");
+        return false;        
+      }
       if( pd.length + pd.start > doc.getLength() )
-        return false;
+      {
+        logError("Partition extends beyond document");
+        return false;        
+      }
       offset = pd.start + pd.length;
     }
     if( getEditModeFlag() )
     {
       if( offset != getEditOffset() )
-        return false;
+      {
+        logError("Gap between partition and edit region");
+        return false;        
+      }
     }
     else
     {
       if( offset != doc.getLength() )
+      {
+        logError("Unpartitioned part at the end of the document");
+        return false;        
+      }
+    }
+    if( !editSanityCheck() )
+    {
+      return false;
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Checks edit partition.
+   * @return true if pass sanity check 
+   */
+  private boolean editSanityCheck()
+  {
+    if( getEditOffset() > doc.getLength() )
+    {
+      logError("Edit region is beyond Repl length");
+      return false;
+    }
+    if( !getEditModeFlag() ) // in read only mode
+    {
+      if (doc.containsPositionCategory(READ_ONLY_CATEGORY))
+      {
+        logError("In read-only mode Repl should not have any read-only positions");
         return false;
+      }
+      if( readOnlyPositions.size() > 0 )
+      {
+        logError("In read-only mode there should be no read-only positions");
+        return false;
+      }
+      if ( editPartition != null && editPartition.children != null
+          && editPartition.children.size() > 0 )
+      {
+        logError("In read-only mode editPartition should not " +
+        		"contain read-only partitions");
+        return false;
+      }
+      return true;
+    }
+    else // in edit mode
+    {
+      if( doc.getLength() == getEditOffset() ) // empty edit partition
+      {
+        if (doc.containsPositionCategory(READ_ONLY_CATEGORY))
+        {
+          logError("Empty edit region, but nonempty position category");
+          return false;
+        }
+        if( readOnlyPositions.size() > 0 )
+        {
+          logError("Empty edit region, but have some read-only positions");
+          return false;
+        }
+        if ( editPartition != null && editPartition.children != null 
+            && editPartition.children.size() > 0 )
+        {
+          logError("Empty edit region, but have read-only partitions");
+          return false;
+        }
+        return true;
+      }
+      else // nonempty edit partition 
+      {
+        int npart = 0;
+        int npos = 0;
+        int ndocpos = 0;
+        if( editPartition != null && editPartition.children != null )
+        {
+          npart = editPartition.children.size();
+        }
+        if( doc.containsPositionCategory(READ_ONLY_CATEGORY) )
+        {
+          try
+          {
+            ndocpos = doc.getPositions(READ_ONLY_CATEGORY).length;
+          }
+          catch(BadPositionCategoryException e)
+          {
+            logException("Bad category: should never get here", e);
+          }
+        }
+        if( readOnlyPositions != null )
+        {
+          npos = readOnlyPositions.size();
+        }
+        if( npart != npos || npart != ndocpos )
+        {
+          logError("Number of read-only partitions should be same " +
+          		"as number of positions");
+        }
+        
+        if( npart > 0 )
+        {
+          int totLength = 0;
+          for( PartitionData pd : editPartition.children )
+          {
+            totLength += pd.length;
+            Position pos = readOnlyPositions.get(pd);
+            if( pos == null )
+            {
+              logError("No position for read-only partition");
+              return false;
+            }
+            if( pos.isDeleted() )
+            {
+              logError("Position for read-only partition is marked as deleted");
+              return false;
+            }
+            if( pos.length != pd.length )
+            {
+              logError("Position length != partition length");
+              return false;
+            }
+            // check if any other partition overlaps this one
+            for( Position p : readOnlyPositions.values() )
+            {
+              if( p != pos && p != null 
+                  && p.overlapsWith(pos.offset, pos.length))
+              {
+                logError("Read only partitions overlap");
+                return false;                
+              }
+            }
+          }
+          if( totLength > doc.getLength() - getEditOffset() )
+          {
+            logError("Total length of read only partitions > " +
+            		"length of edit region in Repl");
+            return false;            
+          }
+        }
+      }
+      
     }
     
     return true;
@@ -1344,7 +1509,7 @@ public class Repl extends ProjectionViewer
    * @param msg
    *          Message to log.
    */
-  public void logErr(String msg)
+  public void logError(String msg)
   {
     if(quietErr)
       return;
