@@ -28,9 +28,12 @@ public class ReplAutoEdit implements IAutoEditStrategy
     if( repl == null ) return;
     if( !repl.getEditModeFlag() )
     {
-      repl.logWarning("Called Auto Edit command when repl is in read-only mode");
+      //repl.logWarning("Called Auto Edit command when repl is in read-only mode");
       return;
     }
+
+ //   repl.deleteEditSelectionPartitions();
+    
     if( c.offset < repl.getEditOffset() )
     {
       repl.logTrace("ReplAutoEdit.customizeDocumentCommand: " +

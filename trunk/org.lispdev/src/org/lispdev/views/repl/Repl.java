@@ -26,9 +26,12 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.jface.text.Position;
 
 /**
@@ -182,6 +185,7 @@ public class ReplView extends ViewPart
  */
 public class Repl extends ProjectionViewer
 {
+  private ClearReplAction clearAction;
   private ReplConfiguration config;
   private int MAX_UNDO = 1000;
   /**
@@ -227,6 +231,13 @@ public class Repl extends ProjectionViewer
     return editOffset;
   }
   
+  
+  private Prompt prompt;
+  
+  public void setPrompt(Prompt prompt)
+  {
+    this.prompt = prompt;
+  }
   
   /**
    * Last edit context = Last prompt context + "." + this string
@@ -321,12 +332,28 @@ public class Repl extends ProjectionViewer
       int partitionResolutionFlag)
   {
     if(doc == null || offset < 0 || offset > doc.getLength())
+    {
+      logTrace("getPartitionPosition:Invalid offset",6);
       return -1;
+    }
 
     // process boundary cases
-    if(partitionRegistry == null || partitionRegistry.get(from).start > offset
-        || partitionRegistry.get(to).start + partitionRegistry.get(to).length < offset)
+    if(partitionRegistry == null )
     {
+      logTrace("getPartitionPosition:partitionRegistry is empty",6);
+      return -1;
+    }
+    if( partitionRegistry.get(from).start > offset )
+    {
+      logTrace("getPartitionPosition: offset = "+offset
+          +" is outside of starting partition: "+ partitionRegistry.get(from).start,6);
+      return -1;
+    }
+    if( partitionRegistry.get(to).start + partitionRegistry.get(to).length < offset)
+    {
+      logTrace("getPartitionPosition: offset = "+offset
+          +" is outside of ending partition: "
+          + partitionRegistry.get(to).start + partitionRegistry.get(to).length,6);
       return -1;
     }
 
@@ -533,6 +560,101 @@ public class Repl extends ProjectionViewer
     return res;
   }
 
+  public ClearReplAction getClearAction()
+  {
+    return clearAction;
+  }
+
+  private void adjustEditSelection()
+  {
+    // adjust selection to be in editable region 
+    Point sel = getTextWidget().getSelection();
+    if(sel.x < getEditOffset())
+    {
+      if( sel.y <= getEditOffset() )
+      {
+        return;
+      }
+      getTextWidget().setSelection(getEditOffset(), sel.y);
+    }    
+  }
+  
+  private void deleteEditSelectionPartitions()
+  {
+    // adjust selection to be in editable region 
+    Point sel = getTextWidget().getSelection();
+    if( sel.x >= sel.y )
+    {
+      return;
+    }
+
+    PartitionData pdx = getReadOnlyPartition(sel.x, Repl.AFTER);
+    if( pdx != null )
+    {
+      if( getEditOffset() + pdx.start < sel.x )
+      {
+        sel.x = getEditOffset() + pdx.start + pdx.length;
+        if( sel.y <= sel.x )
+        {
+          return;
+        }
+        getTextWidget().setSelection(sel.x, sel.y);
+      }
+      else
+      {
+        sel.x = getEditOffset() + pdx.start;
+        sel.y -= pdx.length;
+        deletePartInEdit(pdx);
+        if( sel.x >= sel.y )
+        {
+          return;
+        }              
+      }
+    }
+    PartitionData pdy = getReadOnlyPartition(sel.y, Repl.BEFORE);
+    if( pdy != null )
+    {
+      if( sel.y < getEditOffset() + pdy.start + pdy.length )
+      {
+        sel.y = getEditOffset() + pdy.start;
+        if( sel.y <= sel.x )
+        {
+          return;
+        }
+        getTextWidget().setSelection(sel.x, sel.y);
+      }
+      else
+      {
+        sel.y = getEditOffset() + pdy.start;
+        deletePartInEdit(pdy);
+        if( sel.x >= sel.y )
+        {
+          return;
+        }              
+      }
+    }
+    // test if more partitions to delete
+    int i = sel.x;
+    while( i < sel.y )
+    {
+      PartitionData pd = getReadOnlyPartition(i,Repl.AFTER);
+      if( pd != null )
+      {
+        sel.y -= pd.length;
+        deletePartInEdit(pd);
+      }
+      else
+      {
+        ++i;
+      }
+    }
+    if( sel.x >= sel.y )
+    {
+      return;
+    }
+    getTextWidget().setSelection(sel.x,sel.y);
+  }
+
   public Repl(Composite parent, IVerticalRuler ruler, int styles)
   {
     super(parent, ruler, null, false, styles);
@@ -540,6 +662,8 @@ public class Repl extends ProjectionViewer
     config = new ReplConfiguration(this);
     configure(config);
 
+    clearAction = new ClearReplAction(this);
+    
     doc = new Document();
     partitionRegistry = new ArrayList<PartitionData>();
     // LispDocumentProvider.connectPartitioner(doc);
@@ -552,32 +676,38 @@ public class Repl extends ProjectionViewer
     disconnectUndoManager();
     setEditModeFlag(false);
     setEditOffset(0);
+    // context menu
+    Menu menu = new Menu(getTextWidget());
+    MenuItem clear = new MenuItem(menu,SWT.PUSH);
+    clear.setText("Clear");
+    clear.addListener(SWT.Selection, new Listener() {
+      public void handleEvent(Event e) {
+        clearAction.run();
+      }
+    });
+    getTextWidget().setMenu(menu);
+    // end context menu
+    
     doc.addPositionUpdater(new DefaultPositionUpdater(READ_ONLY_CATEGORY));
     appendVerifyKeyListener(new VerifyKeyListener()/*ReadOnlyBackspaceDel(this)*/
     {
       public void verifyKey(VerifyEvent event)
       {
-        if( !(event.keyCode == SWT.DEL || event.keyCode == SWT.BS) 
-            || !getEditModeFlag())
+        if( !getEditModeFlag() )
         {
+          event.doit = false;
           return;
         }
+        logTrace(event.toString(),10);
+        if( !(event.keyCode == SWT.DEL || event.keyCode == SWT.BS 
+            || event.character != '\0') )
+        {
+          logTrace("Not text changing",10);
+          return;
+        }
+        adjustEditSelection();
         // adjust selection to be in editable region 
         Point sel = getTextWidget().getSelection();
-        if(sel.x < getEditOffset())
-        {
-          if( sel.y <= getEditOffset() )
-          {
-            return;
-          }
-          getTextWidget().setSelection(getEditOffset(), sel.y);
-          sel.x = getEditOffset();
-        }
-        sel.x = Math.max(sel.x, getEditOffset());
-        if( sel.x > sel.y )
-        {
-          return;
-        }
         // nothing is selected
         if( sel.x == sel.y )
         {
@@ -591,7 +721,7 @@ public class Repl extends ProjectionViewer
             }
             return;
           }
-          if( event.keyCode == SWT.BS )
+          else if( event.keyCode == SWT.BS )
           {
             if( sel.x == getEditOffset() )
             {
@@ -605,53 +735,12 @@ public class Repl extends ProjectionViewer
               event.doit = false;
             }
             return;
-          }          
+          }
         }
         else //selection > 0, delete selection and read only if any overlap
         {
-          PartitionData pdx = getReadOnlyPartition(sel.x, Repl.AFTER);
-          if( pdx != null )
-          {
-            sel.x = getEditOffset() + pdx.start;
-            sel.y -= pdx.length;
-            deletePartInEdit(pdx);
-            if( sel.x >= sel.y )
-            {
-              return;
-            }
-          }
-          PartitionData pdy = getReadOnlyPartition(sel.y, Repl.BEFORE);
-          if( pdy != null )
-          {
-            sel.y = getEditOffset() + pdy.start;
-            deletePartInEdit(pdy);
-            if( sel.x >= sel.y )
-            {
-              return;
-            }
-          }
-          // test if more partitions to delete
-          int i = sel.x;
-          while( i < sel.y )
-          {
-            PartitionData pd = getReadOnlyPartition(i,Repl.AFTER);
-            if( pd != null )
-            {
-              sel.y -= pd.length;
-              deletePartInEdit(pd);
-            }
-            else
-            {
-              ++i;
-            }
-          }
-          if( sel.x >= sel.y )
-          {
-            return;
-          }
-          getTextWidget().setSelection(sel.x,sel.y);
+          deleteEditSelectionPartitions();
         }
-        return;
       }
       
     });
@@ -745,69 +834,34 @@ public class Repl extends ProjectionViewer
    * Prints prompt and then switches to edit mode. If Repl is in edit mode,
    * this operation ends current edit session (by calling 
    * <code>stopEdit()</code>) and starts new edit session.
-   * @param prompt - prompt string. 
-   * If you want it to be on new line precede with "\n"
-   * @param promptContext - string identifying prompt context
-   * @param id - number that can be used to identify this particular prompt
-   * @param promptStyle - style ranges specifying how prompt should be printed
-   * @param onNewLine - if true starts prompt on new line
-   * 
-   * @notes  After calling this function don't forget to move
-   * caret to end of document by calling:
-   * repl.getTextWidget().setCaretOffset(repl.getDocument().getLength());
+   * @param prompt - prompt data describing what to print and how to format. 
    */
-  public void startEdit(String prompt, String promptContext, String id,
-      StyleRange[] promptStyle, boolean onNewLine)
+  public void startEdit(Prompt prompt)
   {
-    logTraceEntry("\""+prompt+"\",\""+promptContext
-        +"\","+String.valueOf(promptStyle),7);
+    logTraceEntry(prompt.toString(),7);
     if( getEditModeFlag() )
     {
       logTrace("startEdit: called in edit mode",7);
       stopEdit();
     }
-    appendText(prompt, promptContext, id, promptStyle, onNewLine);
+    appendText(prompt.prompt, prompt.partition.clone(), prompt.onNewLine);
     connectUndoManager();
     setEditModeFlag(true);
     editPartition = new PartitionData(getEditOffset(),0,
-        promptContext+"."+EDIT_CONTEXT,id);
+        prompt.partition.context+"."+EDIT_CONTEXT,prompt.partition.id);
     logTrace("startEdit: at offset = " + String.valueOf(getEditOffset())
-        + ", with prompt \"" + prompt + "\", and context \"" + promptContext
+        + ", with prompt \"" + prompt + "\", and context \"" 
+        + prompt.partition.context
         + "\"",4);
+    getTextWidget().setCaretOffset(getDocument().getLength());
     logTraceReturn("",7);
   }
-
-
-  /**
-   * Prints prompt, creates and then switches to edit mode. If Repl is in edit
-   * mode, this operation ends current edit session (by calling 
-   * <code>stopEdit()</code>) and starts new edit session.
-   * Prompt is printed using given style parameters. 
-   * 
-   * @param prompt - text to print
-   * @param promptContext - context for the prompt
-   * @param id - numeric identifier of the prompt
-   * @param foreground - foreground color, <code>null</code> if none
-   * @param background - background color, <code>null</code> if none
-   * @param fontStyle - font style of the style, may be 
-   * <code>SWT.NORMAL</code>, <code>SWT.ITALIC</code> or <code>SWT.BOLD</code>
-   * @param onNewLine - if true, prompt is printed on new line
-   */
-  public void startEdit(String prompt, String promptContext, String id,
-      Color foreground, Color background, int fontStyle, boolean onNewLine)
+  
+  public void startEdit()
   {
-    logTraceEntry("\""+prompt+"\",\""+promptContext
-        +"\","+String.valueOf(foreground)+","+String.valueOf(background)
-        +","+String.valueOf(fontStyle)+","+String.valueOf(onNewLine),5);
-    String pr = prompt;
-    startEdit(pr,promptContext, id,
-        new StyleRange[]{new StyleRange(0,pr.length(),foreground,
-            background,fontStyle)},onNewLine);
-    getTextWidget().setCaretOffset(getDocument().getLength());
-    logTraceEntry("",7);
+    startEdit(prompt);
   }
-  
-  
+
   /**
    * Checks that all text is partitioned
    * and partitions and styles do not overlap.
@@ -1100,7 +1154,7 @@ public class Repl extends ProjectionViewer
             traceMsg += ", printing: " + str;
           }
         }
-        if( onNewLine )
+        if( onNewLine && doc.getLength() > 0 )
         {
           PartitionData pd = new PartitionData(offset,"\n".length(),
               NEW_LINE_CONTEXT,"0");
@@ -1332,12 +1386,13 @@ public class Repl extends ProjectionViewer
   
   
   /**
-   * clears all text, leaves editing mode unchanged
+   * clears all text, and sets mode to read only
    */
   public void clear()
   {
     logTraceEntry("",7);
     
+    stopEdit();
     try
     {
       if( doc.containsPositionCategory(READ_ONLY_CATEGORY) )
@@ -1352,10 +1407,6 @@ public class Repl extends ProjectionViewer
     partitionRegistry.clear();
     readOnlyPositions.clear();
     disconnectUndoManager();
-    if(getEditModeFlag())
-    {
-      connectUndoManager();
-    }
     setEditOffset(0);
     try
     {
@@ -1365,6 +1416,7 @@ public class Repl extends ProjectionViewer
     {
       logException("clear: should never end up here",e);
     }
+    stopEdit();
     logTraceReturn("",7);
   }
   
@@ -1453,6 +1505,16 @@ public class Repl extends ProjectionViewer
       eListeners = new ArrayList<ILogExceptionListener>();
     eListeners.add(log);
   }
+  
+  /*
+  private static final String DATE_FORMAT_NOW = "MM-dd HH:mm:ss:ms";
+
+  private static String now() {
+    Calendar cal = Calendar.getInstance();
+    SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
+    return sdf.format(cal.getTime());
+  }
+  */
 
   private String getLocation()
   {

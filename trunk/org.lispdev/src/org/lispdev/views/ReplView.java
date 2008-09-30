@@ -4,14 +4,10 @@
 package org.lispdev.views;
 
 import org.lispdev.LispdevPlugin;
-import org.lispdev.views.repl.Repl;
-import org.lispdev.views.repl.ReplEchoListener;
-import org.lispdev.views.repl.ReplEnterTrigger;
-import org.lispdev.views.repl.ReplInputTrigger;
+import org.lispdev.views.repl.*;
 
 import org.eclipse.jface.text.source.VerticalRuler;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -84,10 +80,13 @@ public class ReplView extends ViewPart
     inputTrigger.addInputListener(echo);
     //repl.appendVerifyKeyListener(inputTrigger);
     repl.getTextWidget().addVerifyKeyListener(inputTrigger);
-    repl.startEdit("start>", "this prompt","0",
-        new StyleRange[]{new StyleRange(0, "start>".length(),
-            null, null, SWT.BOLD)},false);
+    //"Echo>","echo_prompt","0"
+    repl.setPrompt(new Prompt("Echo>","echo_prompt","0",null,null,SWT.BOLD,true));
+    repl.startEdit();
 
+    //getViewSite().getActionBars().getToolBarManager()
+    //  .add(repl.getClearAction());
+    //repl.getClearAction().setEnabled(true);
   }
 
   /* (non-Javadoc)
