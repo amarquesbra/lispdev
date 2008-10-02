@@ -6,6 +6,7 @@ package org.lispdev.views.repl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.text.BadLocationException;
@@ -269,8 +270,25 @@ public class Repl extends ProjectionViewer
    * Positions hold offsets associated with partition data.
    */
   private HashMap<PartitionData,Position> readOnlyPositions;
+  
+  private String printReadOnlyPositions()
+  {
+    String res = "{";
+    if(readOnlyPositions != null)
+    {
+      for( PartitionData pd : readOnlyPositions.keySet() )
+      {
+        Position pos = readOnlyPositions.get(pd);
+        res += "\n{"+pd+"= Pos {"+pos.offset+","+pos.length+","+pos.isDeleted()+"}";
+      }
+    }
+    res += "}";
+    return res;
+  }
+  
   private String READ_ONLY_CATEGORY = "repl.read.only.position.category";
   
+  private Stack<FullPartitionData> deletedPartitions;
 
   final TextViewerUndoManager undoManager;
 
@@ -671,6 +689,7 @@ public class Repl extends ProjectionViewer
     showAnnotations(false);
     showAnnotationsOverview(false);
     readOnlyPositions = new HashMap<PartitionData,Position>();
+    deletedPartitions = new Stack<FullPartitionData>();
     undoManager = new TextViewerUndoManager(MAX_UNDO);
     iniUndoManager();
     disconnectUndoManager();
@@ -705,6 +724,13 @@ public class Repl extends ProjectionViewer
           logTrace("Not text changing",10);
           return;
         }
+        if( isUndoKeyPress(event) || isRedoKeyPress(event) )
+        {
+          logTrace("Undo or redo",10);
+          return;
+        }
+        logTrace("adjustEditSelection",10);
+        logTrace("event = "+event,10);
         adjustEditSelection();
         // adjust selection to be in editable region 
         Point sel = getTextWidget().getSelection();
@@ -755,7 +781,7 @@ public class Repl extends ProjectionViewer
     undoManager.connect(this);
     setUndoManager(undoManager);
 
-    StyledText styledText = getTextWidget();
+    final StyledText styledText = getTextWidget();
     styledText.addVerifyListener(new VerifyListener()
     {
       public void verifyText(VerifyEvent e)
@@ -768,29 +794,92 @@ public class Repl extends ProjectionViewer
     {
       public void keyPressed(KeyEvent e)
       {
-        if(isUndoKeyPress(e))
+        final int tracelvl = 10;
+        String before = null;
+        if(isUndoKeyPress(e) && canDoOperation(ITextOperationTarget.UNDO))
         {
+          logTrace("before undo - edit: "+editPartition,tracelvl);
+          logTrace("before undo - readonly: "+printReadOnlyPositions(),tracelvl);
+          before = getEditText();
           doOperation(ITextOperationTarget.UNDO);
+          logTrace("after undo - edit: "+editPartition,tracelvl);
+          logTrace("after undo - readonly: "+printReadOnlyPositions(),tracelvl);
         }
-        else if(isRedoKeyPress(e))
+        else if(isRedoKeyPress(e) && canDoOperation(ITextOperationTarget.REDO))
         {
+          logTrace("before redo - edit: "+editPartition,tracelvl);
+          logTrace("before redo - readonly: "+printReadOnlyPositions(),tracelvl);
+          before = getEditText();
           doOperation(ITextOperationTarget.REDO);
+          logTrace("after redo - edit: "+editPartition,tracelvl);
+          logTrace("after redo - readonly: "+printReadOnlyPositions(),tracelvl);
         }
-      }
-
-      // TODO: should the combination be customizable?
-      private boolean isUndoKeyPress(KeyEvent e)
-      {
-        // CTRL + z
-        return ((e.stateMask & SWT.CONTROL) > 0)
-            && ((e.keyCode == 'z') || (e.keyCode == 'Z'));
-      }
-
-      private boolean isRedoKeyPress(KeyEvent e)
-      {
-        // CTRL + y
-        return ((e.stateMask & SWT.CONTROL) > 0)
-            && ((e.keyCode == 'y') || (e.keyCode == 'Y'));
+        if(before != null)
+        {
+          String sel = styledText.getSelectionText();
+          Point selection = styledText.getSelectionRange();
+          logTrace("sel = "+sel,tracelvl);
+          logTrace("selection = "+selection,tracelvl);
+          if( sel.length() > 0 ) // restored text
+          {
+            FullPartitionData last = 
+              deletedPartitions.peek();
+            logTrace("last deleted partition = "+last,tracelvl);
+            if( last.txt.equals(sel) 
+                && selection.x == last.partition.start )
+            {
+              PartitionData pd = last.partition;
+              pd.start -= getEditOffset();
+              logTrace("creating read only partition: "+pd,tracelvl);
+              createReadOnlyPartition(selection.x, selection.y, pd);
+              deletedPartitions.pop();
+            }
+          }
+          else // potentially removed text
+          {
+            String after = getEditText();
+            int length = before.length() - after.length();
+            logTrace("length = "+length,tracelvl);
+            if( length > 0 ) //text was removed, check if need to delete partitions
+            {
+              int offset = selection.x - getEditOffset();
+              logTrace("offset = "+offset,tracelvl);
+              String diff = before.substring(offset,offset + length);
+              logTrace("diff = "+diff,tracelvl);
+              logTrace("editPartition = "+editPartition,tracelvl);
+              logTrace("readOnlyPos = "+printReadOnlyPositions(),tracelvl);
+              // find if there is a partition with this offset (and check length)
+              if( editPartition != null && editPartition.children != null
+                  && editPartition.children.size() > 0 )
+              {
+                for( PartitionData pd : editPartition.children )
+                {
+                  logTrace("pd = "+pd,tracelvl);
+                  if( pd.start == offset && pd.length == length )
+                  {
+                    Position pos = readOnlyPositions.get(pd);
+                    logTrace("Pos {"+pos.offset+","+pos.length+","+pos.isDeleted()+"}",tracelvl);
+                    pd.start = pos.offset;
+                    try
+                    {
+                      doc.removePosition(READ_ONLY_CATEGORY, pos);
+                    }
+                    catch(BadPositionCategoryException e1)
+                    {
+                      logException("deletePartInEdit: could not delete position",e1);
+                    }
+                    readOnlyPositions.remove(pd);
+                    deletedPartitions.push(new FullPartitionData(diff,pd));
+                    editPartition.children.remove(pd);
+                  }
+                  break;
+                }
+              }
+            }
+          }
+          logTrace("after processing - edit: "+editPartition,tracelvl);
+          logTrace("after processing - readonly: "+printReadOnlyPositions(),tracelvl);
+        }
       }
 
       public void keyReleased(KeyEvent e)
@@ -798,6 +887,21 @@ public class Repl extends ProjectionViewer
         // do nothing
       }
     });
+  }
+
+  // TODO: should the combination be customizable?
+  private boolean isUndoKeyPress(KeyEvent e)
+  {
+    // CTRL + z
+    return ((e.stateMask & SWT.CONTROL) > 0)
+        && ((e.keyCode == 'z') || (e.keyCode == 'Z'));
+  }
+
+  private boolean isRedoKeyPress(KeyEvent e)
+  {
+    // CTRL + y
+    return ((e.stateMask & SWT.CONTROL) > 0)
+        && ((e.keyCode == 'y') || (e.keyCode == 'Y'));
   }
 
   public void setCaret(int offset)
@@ -930,6 +1034,7 @@ public class Repl extends ProjectionViewer
   
   /**
    * Checks edit partition.
+   * TODO: add check of deleted partitions
    * @return true if pass sanity check 
    */
   private boolean editSanityCheck()
@@ -1083,6 +1188,7 @@ public class Repl extends ProjectionViewer
         partitionRegistry.add(getCurrentEditPartition());        
       }
       readOnlyPositions.clear();
+      deletedPartitions.clear();
       disconnectUndoManager();
       setEditModeFlag(false);
       setEditOffset(doc.getLength());
@@ -1322,17 +1428,24 @@ public class Repl extends ProjectionViewer
     //create new partition: cloning, since we don't want to conflict with
     //existing one when updating offsets
     PartitionData pdnew = pd.clone();
-    pdnew.start = insoffset - getEditOffset(); //relative to start of editRegion
+    createReadOnlyPartition(insoffset, txt.length(), pdnew);
+    getTextWidget().setCaretOffset(insoffset+pdnew.length);
+  }
+  
+  private void createReadOnlyPartition(int offset, int length,
+      PartitionData pd)
+  {
+    pd.start = offset - getEditOffset(); //relative to start of editRegion
     //apply styles
-    applyPartitionStyles(getEditOffset(),pdnew);
+    applyPartitionStyles(getEditOffset(),pd);
     //add the partition to children
     if( editPartition.children == null )
     {
       editPartition.children = new ArrayList<PartitionData>();
     }
-    editPartition.children.add(pdnew);
+    editPartition.children.add(pd);
     //add read only markers to document
-    Position pos = new Position(insoffset,txt.length());
+    Position pos = new Position(offset,length);
     try
     {
       if( !doc.containsPositionCategory(READ_ONLY_CATEGORY) )
@@ -1350,8 +1463,7 @@ public class Repl extends ProjectionViewer
       logException("insertPartEdit: could not insert position",e);
     }
     //finally connect markers with partition through HashMap
-    readOnlyPositions.put(pdnew, pos);
-    getTextWidget().setCaretOffset(insoffset+pdnew.length);
+    readOnlyPositions.put(pd, pos);
   }
   
   private void deletePartInEdit(PartitionData pd)
@@ -1364,6 +1476,7 @@ public class Repl extends ProjectionViewer
     }
     
     Position pos = readOnlyPositions.get(pd);
+    pd.start = pos.offset;
     try
     {
       doc.removePosition(READ_ONLY_CATEGORY, pos);
@@ -1375,6 +1488,8 @@ public class Repl extends ProjectionViewer
     readOnlyPositions.remove(pd);
     try
     {
+      String txt = doc.get(pd.start, pd.length);
+      deletedPartitions.push(new FullPartitionData(txt,pd));
       doc.replace(pos.getOffset(), pd.length, "");
     }
     catch(BadLocationException e)
@@ -1406,6 +1521,7 @@ public class Repl extends ProjectionViewer
     }
     partitionRegistry.clear();
     readOnlyPositions.clear();
+    deletedPartitions.clear();
     disconnectUndoManager();
     setEditOffset(0);
     try
