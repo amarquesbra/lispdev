@@ -114,7 +114,8 @@ public class PartitionData
   public String toString()
   {
     String res = "{"+context+","+String.valueOf(id)+","
-    +String.valueOf(start)+","+String.valueOf(length)+"}";
+    +String.valueOf(start)+","+String.valueOf(length)+","
+    +String.valueOf(children)+"}";
     return res;
   }
   
