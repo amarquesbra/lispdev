@@ -9,7 +9,6 @@ import org.lispdev.views.repl.Repl;
 import net.sf.swtbot.eclipse.finder.SWTBotEclipseTestCase;
 import net.sf.swtbot.eclipse.finder.widgets.SWTBotView;
 import net.sf.swtbot.widgets.SWTBotStyledText;
-import net.sf.swtbot.widgets.SWTBotTreeItem;
 import net.sf.swtbot.widgets.WidgetNotFoundException;
 
 // to enable swtbot logging put this
@@ -324,5 +323,21 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     bot.sleep(500);
     
   }
-		  
+	
+  public void testBug4case1()
+  {
+    rtxt.typeText("123");
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+
+    trace(" ===== Bug#4: (case 1) Make undo-redo work with read-only");
+    rtxt.typeText("abc");
+    rtxt.selectRange(0, 6, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+    rtxt.selectRange(2, 8, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.DEL, SWT.DEL);
+    rtxt.notifyKeyboardEvent(SWT.CTRL, 'z', 'z');
+    rtxt.selectRange(2, 9, 0);
+    rtxt.typeText("a");
+    assertEquals("abc123a",repl.getEditText());
+  }
 }
