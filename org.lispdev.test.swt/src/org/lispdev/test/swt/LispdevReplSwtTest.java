@@ -313,7 +313,7 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
      */
     
     
-    bot.sleep(500);
+ //   bot.sleep(500);
     
   }
 	
@@ -367,5 +367,22 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     rtxt.selectRange(2, 7, 2);    
     rtxt.notifyKeyboardEvent(SWT.CTRL, 'v', 'v');
     assertEquals("abab",repl.getEditText());
+  }
+
+  public void testBug12()
+  {
+    rtxt.typeText("123");
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+
+    trace(" ===== Bug#12: Wrong offset of readonly relative to text");
+    rtxt.typeText("abc");
+    rtxt.selectRange(0, 6, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+    rtxt.selectRange(2, 7, 2); //select 'c1' 
+    rtxt.typeText("f");
+    rtxt.notifyKeyboardEvent(SWT.CTRL, 'z', 'z');
+    rtxt.selectRange(2, 8, 0); //put cursor between c and 1 
+    rtxt.typeText("f");
+    assertEquals("abcf123",repl.getEditText());
   }
 }
