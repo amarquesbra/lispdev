@@ -793,14 +793,6 @@ public class Repl extends ProjectionViewer
             return;
           }          
         }
-        else
-        {
-          /*
-          sel = computeExpandedEditSelection();
-          toDeletePartitions(sel);
-          getTextWidget().setSelection(sel);
-          */          
-        }        
       }
       
     });
@@ -866,9 +858,8 @@ public class Repl extends ProjectionViewer
             {
               for( PartitionData pd : last.partitions )
               {
-                pd.start -= getEditOffset();
                 logTrace("creating read only partition: "+pd,tracelvl);
-                createReadOnlyPartition(selection.x, selection.y, pd);                
+                createReadOnlyPartition(pd.start+getEditOffset(), pd.length, pd);                
               }
               deletedPartitions.pop();
             }
@@ -1493,6 +1484,7 @@ public class Repl extends ProjectionViewer
     editPartition.children.add(pd);
     //add read only markers to document
     Position pos = new Position(offset,length);
+    int tmp = doc.getLength();
     try
     {
       if( !doc.containsPositionCategory(READ_ONLY_CATEGORY) )
