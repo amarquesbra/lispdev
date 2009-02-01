@@ -44,7 +44,7 @@ public class ReplAutoEdit implements IAutoEditStrategy
     {
       //extend selection to cover overlapping read-only
       //remove read-only (without text)
-      repl.logTrace("Sel = "+sel.y, 1);
+      repl.logTrace("Sel = "+sel.y, 10);
       Point selnew = repl.computeExpandedEditSelection();
       if( selnew != null )
       {
