@@ -26,7 +26,7 @@ public class ReplAutoEdit implements IAutoEditStrategy
    */
   public void customizeDocumentCommand(IDocument d, DocumentCommand c)
   {
-    repl.logTrace("DocCommand = {"+c.length+","+c.offset+","+c.text+"}", 1);
+    repl.logTrace("DocCommand = {"+c.length+","+c.offset+","+c.text+"}", 10);
     if( repl == null ) return;
     if( !repl.getEditModeFlag() )
     {

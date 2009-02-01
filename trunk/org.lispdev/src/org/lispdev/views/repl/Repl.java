@@ -742,7 +742,7 @@ public class Repl extends ProjectionViewer
     {
       public void verifyKey(VerifyEvent event)
       {
-        final int tracelvl = 1;
+        final int tracelvl = 10;
         if( !getEditModeFlag() )
         {
           event.doit = false;
