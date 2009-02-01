@@ -352,4 +352,20 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     rtxt.typeText("a");
     assertEquals("abc123a",repl.getEditText());
   }
+
+  public void testBug9()
+  {
+    rtxt.typeText("123");
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+
+    trace(" ===== Bug#9: Can destroy part of read only using paste");
+    rtxt.typeText("abc");
+    rtxt.selectRange(0, 6, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+    rtxt.selectRange(2, 5, 2);
+    rtxt.notifyKeyboardEvent(SWT.CTRL, 'c', 'c');
+    rtxt.selectRange(2, 7, 2);    
+    rtxt.notifyKeyboardEvent(SWT.CTRL, 'v', 'v');
+    assertEquals("abab",repl.getEditText());
+  }
 }
