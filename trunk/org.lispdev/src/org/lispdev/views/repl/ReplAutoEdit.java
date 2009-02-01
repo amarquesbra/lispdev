@@ -26,7 +26,7 @@ public class ReplAutoEdit implements IAutoEditStrategy
    */
   public void customizeDocumentCommand(IDocument d, DocumentCommand c)
   {
-    repl.logTrace("DocCommand = {"+c.length+","+c.offset+","+c.text+"}", 10);
+    repl.logTrace("DocCommand = {"+c.length+","+c.offset+","+c.text+"}", 1);
     if( repl == null ) return;
     if( !repl.getEditModeFlag() )
     {
@@ -34,33 +34,38 @@ public class ReplAutoEdit implements IAutoEditStrategy
       return;
     }
 
- //   repl.deleteEditSelectionPartitions();
-    
-    if( c.offset < repl.getEditOffset() )
+    Point sel = repl.getSelectedRange();
+    if( sel.x < repl.getEditOffset() )
     {
-      repl.logTrace("ReplAutoEdit.customizeDocumentCommand: " +
-      		"move carret from read-only to start of edit region",5);
-      c.offset = repl.getEditOffset();
+      sel.y -= repl.getEditOffset() - sel.x;
+      sel.x = repl.getEditOffset();
+    }
+    if(sel.y > 0)
+    {
+      //extend selection to cover overlapping read-only
+      //remove read-only (without text)
+      repl.logTrace("Sel = "+sel.y, 1);
+      Point selnew = repl.computeExpandedEditSelection();
+      if( selnew != null )
+      {
+        repl.toDeletePartitions(selnew);
+        c.offset = selnew.x;
+        c.length = selnew.y - selnew.x;
+      }
     }
     else
     {
-      Point sel = repl.getSelectedRange();
-      if(sel.y > 0)
+      if( c.offset < repl.getEditOffset() )
       {
-        //extend selection to cover overlapping read-only
-        //remove read-only (without text)
-        repl.logTrace("Sel = "+sel.y, 1);
-        // repl.deleteEditSelectionPartitions(); this doesn't work here with ctrl+v
-        // so need to do similar things here with offset and text things
+        repl.logTrace("ReplAutoEdit.customizeDocumentCommand: " +
+            "move carret from read-only to start of edit region",5);
+        c.offset = repl.getEditOffset();
       }
-      else
+      PartitionData pd = repl.getReadOnlyPartition(c.offset,Repl.NONE); 
+      if( pd != null )
       {
-        PartitionData pd = repl.getReadOnlyPartition(c.offset,Repl.NONE); 
-        if( pd != null )
-        {
-          c.offset = repl.getEditOffset() + pd.start + pd.length;
-        }        
-      }
+        c.offset = repl.getEditOffset() + pd.start + pd.length;
+      }        
     }
   }
 

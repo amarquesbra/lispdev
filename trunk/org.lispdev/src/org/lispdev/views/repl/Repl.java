@@ -742,7 +742,7 @@ public class Repl extends ProjectionViewer
     {
       public void verifyKey(VerifyEvent event)
       {
-        final int tracelvl = 10;
+        final int tracelvl = 1;
         if( !getEditModeFlag() )
         {
           event.doit = false;
@@ -760,7 +760,6 @@ public class Repl extends ProjectionViewer
           logTrace("Undo or redo",tracelvl);
           return;
         }
-        logTrace("event = "+event,tracelvl);
         Point sel = getTextWidget().getSelection();
         if( sel.x < getEditOffset() && sel.y < getEditOffset() )
         {
@@ -796,9 +795,11 @@ public class Repl extends ProjectionViewer
         }
         else
         {
+          /*
           sel = computeExpandedEditSelection();
           toDeletePartitions(sel);
-          getTextWidget().setSelection(sel);          
+          getTextWidget().setSelection(sel);
+          */          
         }        
       }
       
