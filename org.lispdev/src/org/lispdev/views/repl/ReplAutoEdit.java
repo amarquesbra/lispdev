@@ -6,6 +6,7 @@ package org.lispdev.views.repl;
 import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.swt.graphics.Point;
 
 /**
  * @author sk
@@ -25,6 +26,7 @@ public class ReplAutoEdit implements IAutoEditStrategy
    */
   public void customizeDocumentCommand(IDocument d, DocumentCommand c)
   {
+    repl.logTrace("DocCommand = {"+c.length+","+c.offset+","+c.text+"}", 10);
     if( repl == null ) return;
     if( !repl.getEditModeFlag() )
     {
@@ -42,10 +44,22 @@ public class ReplAutoEdit implements IAutoEditStrategy
     }
     else
     {
-      PartitionData pd = repl.getReadOnlyPartition(c.offset,Repl.NONE); 
-      if( pd != null )
+      Point sel = repl.getSelectedRange();
+      if(sel.y > 0)
       {
-        c.offset = repl.getEditOffset() + pd.start + pd.length;
+        //extend selection to cover overlapping read-only
+        //remove read-only (without text)
+        repl.logTrace("Sel = "+sel.y, 1);
+        // repl.deleteEditSelectionPartitions(); this doesn't work here with ctrl+v
+        // so need to do similar things here with offset and text things
+      }
+      else
+      {
+        PartitionData pd = repl.getReadOnlyPartition(c.offset,Repl.NONE); 
+        if( pd != null )
+        {
+          c.offset = repl.getEditOffset() + pd.start + pd.length;
+        }        
       }
     }
   }

@@ -288,7 +288,7 @@ public class Repl extends ProjectionViewer
   
   private String READ_ONLY_CATEGORY = "repl.read.only.position.category";
   
-  private Stack<FullPartitionData> deletedPartitions;
+  private Stack<DeletedPartitionData> deletedPartitions;
 
   final TextViewerUndoManager undoManager;
 
@@ -583,94 +583,124 @@ public class Repl extends ProjectionViewer
     return clearAction;
   }
 
-  private void adjustEditSelection()
+  /**
+   * Find how to extend selection (get new offsets for selection), 
+   * so that it doesn't half cover any read-only.
+   * @return new selection
+   */
+  public Point computeExpandedEditSelection()
   {
-    // adjust selection to be in editable region 
+    final int tracelvl = 10;
     Point sel = getTextWidget().getSelection();
-    if(sel.x < getEditOffset())
+    logTrace("editOffset = "+getEditOffset(), tracelvl);
+    logTrace("selection = "+sel.toString(),tracelvl);
+    // 1. adjust x
+    if( sel.x < getEditOffset() )
     {
       if( sel.y <= getEditOffset() )
       {
-        return;
-      }
-      getTextWidget().setSelection(getEditOffset(), sel.y);
-    }    
-  }
-  
-  private void deleteEditSelectionPartitions()
-  {
-    // adjust selection to be in editable region 
-    Point sel = getTextWidget().getSelection();
-    if( sel.x >= sel.y )
-    {
-      return;
-    }
-
-    PartitionData pdx = getReadOnlyPartition(sel.x, Repl.AFTER);
-    if( pdx != null )
-    {
-      if( getEditOffset() + pdx.start < sel.x )
-      {
-        sel.x = getEditOffset() + pdx.start + pdx.length;
-        if( sel.y <= sel.x )
-        {
-          return;
-        }
-        getTextWidget().setSelection(sel.x, sel.y);
+        return null;
       }
       else
       {
-        sel.x = getEditOffset() + pdx.start;
-        sel.y -= pdx.length;
-        deletePartInEdit(pdx);
-        if( sel.x >= sel.y )
-        {
-          return;
-        }              
+        sel.x = getEditOffset();
       }
+    }
+    else
+    {
+      PartitionData pdx = getReadOnlyPartition(sel.x, Repl.AFTER);
+      if( pdx != null )
+      {
+        sel.x = getEditOffset() + pdx.start;
+      }
+    }
+    
+    // 2. adjust y
+    if( sel.y <= sel.x )
+    {
+      sel.y = sel.x;
     }
     PartitionData pdy = getReadOnlyPartition(sel.y, Repl.BEFORE);
     if( pdy != null )
     {
-      if( sel.y < getEditOffset() + pdy.start + pdy.length )
-      {
-        sel.y = getEditOffset() + pdy.start;
-        if( sel.y <= sel.x )
-        {
-          return;
-        }
-        getTextWidget().setSelection(sel.x, sel.y);
-      }
-      else
-      {
-        sel.y = getEditOffset() + pdy.start;
-        deletePartInEdit(pdy);
-        if( sel.x >= sel.y )
-        {
-          return;
-        }              
-      }
+      sel.y = getEditOffset() + pdy.start + pdy.length;
     }
-    // test if more partitions to delete
-    int i = sel.x;
-    while( i < sel.y )
-    {
-      PartitionData pd = getReadOnlyPartition(i,Repl.AFTER);
-      if( pd != null )
-      {
-        sel.y -= pd.length;
-        deletePartInEdit(pd);
-      }
-      else
-      {
-        ++i;
-      }
-    }
-    if( sel.x >= sel.y )
+    
+    return sel;
+  }
+
+  /**
+   * Given selection offset, create entry in deletedPartitions for corresponding
+   * partitions in the selection and remove these partitions from
+   * edit area.
+   * @param selection region from which to delete partitions (it is assumed
+   * that this selection is a result of {@link #computeExandedEditSelection()})
+   */
+  public void toDeletePartitions(Point selection)
+  {
+    if( selection == null || editPartition == null
+        || editPartition.children == null )
     {
       return;
     }
-    getTextWidget().setSelection(sel.x,sel.y);
+    
+    int x = selection.x - getEditOffset();
+    int y = selection.y - getEditOffset();
+    DeletedPartitionData dp = new DeletedPartitionData();
+    dp.txt = getEditText().substring(x,y);
+    dp.offset = x;
+    dp.partitions = new ArrayList<PartitionData>();
+    for( PartitionData pd : getCurrentEditPartition().children )
+    {
+      if( pd.start >= x && pd.start + pd.length <= y )
+      {
+        dp.partitions.add(pd);
+        Position pos = readOnlyPositions.get(pd);
+        try
+        {
+          doc.removePosition(READ_ONLY_CATEGORY, pos);
+        }
+        catch(BadPositionCategoryException e1)
+        {
+          logException("deletePartInEdit: could not delete position",e1);
+        }
+        readOnlyPositions.remove(pd);
+      }
+    }
+    for( PartitionData pd : dp.partitions )
+    {
+      editPartition.children.remove(pd);
+    }
+    deletedPartitions.push(dp);
+  }
+  
+  /**
+   * Extends selection to be in edit region and cover read-only
+   * partitions. Then delete text and partitions.
+   * Change this function to do the following:
+   * 1. Find how to extend selection (get new offsets for selection), 
+   *    so that it doesn't half cover any read-only.
+   * 2. Given selection offset, delete all read-only partitions in it
+   * 3. Delete text.
+   */
+  public void deleteEditSelectionPartitions()
+  {
+    Point sel = computeExpandedEditSelection();
+    if( sel == null )
+    {
+      return;
+    }
+    
+    toDeletePartitions(sel);
+    try
+    {
+      doc.replace(sel.x, sel.y - sel.x, "");
+    }
+    catch(BadLocationException e)
+    {
+      logException("Should not get here", e);
+    }
+    getTextWidget().setSelection(sel.x,sel.x);
   }
 
   public Repl(Composite parent, IVerticalRuler ruler, int styles)
@@ -689,7 +719,7 @@ public class Repl extends ProjectionViewer
     showAnnotations(false);
     showAnnotationsOverview(false);
     readOnlyPositions = new HashMap<PartitionData,Position>();
-    deletedPartitions = new Stack<FullPartitionData>();
+    deletedPartitions = new Stack<DeletedPartitionData>();
     undoManager = new TextViewerUndoManager(MAX_UNDO);
     iniUndoManager();
     disconnectUndoManager();
@@ -706,36 +736,37 @@ public class Repl extends ProjectionViewer
     });
     getTextWidget().setMenu(menu);
     // end context menu
-    
+
     doc.addPositionUpdater(new DefaultPositionUpdater(READ_ONLY_CATEGORY));
     appendVerifyKeyListener(new VerifyKeyListener()/*ReadOnlyBackspaceDel(this)*/
     {
       public void verifyKey(VerifyEvent event)
       {
+        final int tracelvl = 10;
         if( !getEditModeFlag() )
         {
           event.doit = false;
           return;
         }
-        logTrace(event.toString(),10);
-        if( !(event.keyCode == SWT.DEL || event.keyCode == SWT.BS 
+        logTrace(event.toString(),tracelvl);
+        if( !(event.keyCode == SWT.DEL || event.keyCode == SWT.BS
             || event.character != '\0') )
         {
-          logTrace("Not text changing",10);
+          logTrace("Not text changing",tracelvl);
           return;
         }
         if( isUndoKeyPress(event) || isRedoKeyPress(event) )
         {
-          logTrace("Undo or redo",10);
+          logTrace("Undo or redo",tracelvl);
           return;
         }
-        logTrace("adjustEditSelection",10);
-        logTrace("event = "+event,10);
-        adjustEditSelection();
-        // adjust selection to be in editable region 
+        logTrace("event = "+event,tracelvl);
         Point sel = getTextWidget().getSelection();
-        // nothing is selected
-        if( sel.x == sel.y )
+        if( sel.x < getEditOffset() && sel.y < getEditOffset() )
+        {
+          return;
+        }
+        else if ( sel.x == sel.y )
         {
           if( event.keyCode == SWT.DEL )
           {
@@ -761,12 +792,14 @@ public class Repl extends ProjectionViewer
               event.doit = false;
             }
             return;
-          }
+          }          
         }
-        else //selection > 0, delete selection and read only if any overlap
+        else
         {
-          deleteEditSelectionPartitions();
-        }
+          sel = computeExpandedEditSelection();
+          toDeletePartitions(sel);
+          getTextWidget().setSelection(sel);          
+        }        
       }
       
     });
@@ -795,6 +828,8 @@ public class Repl extends ProjectionViewer
       public void keyPressed(KeyEvent e)
       {
         final int tracelvl = 10;
+        logTrace(e.toString(),tracelvl);
+        logTrace("Selection = {"+getTextWidget().getSelection().toString()+"}",tracelvl);
         String before = null;
         if(isUndoKeyPress(e) && canDoOperation(ITextOperationTarget.UNDO))
         {
@@ -822,16 +857,18 @@ public class Repl extends ProjectionViewer
           logTrace("selection = "+selection,tracelvl);
           if( sel.length() > 0 ) // restored text
           {
-            FullPartitionData last = 
+            DeletedPartitionData last = 
               deletedPartitions.peek();
             logTrace("last deleted partition = "+last,tracelvl);
             if( last.txt.equals(sel) 
-                && selection.x == last.partition.start )
+                && selection.x == last.offset + getEditOffset() )
             {
-              PartitionData pd = last.partition;
-              pd.start -= getEditOffset();
-              logTrace("creating read only partition: "+pd,tracelvl);
-              createReadOnlyPartition(selection.x, selection.y, pd);
+              for( PartitionData pd : last.partitions )
+              {
+                pd.start -= getEditOffset();
+                logTrace("creating read only partition: "+pd,tracelvl);
+                createReadOnlyPartition(selection.x, selection.y, pd);                
+              }
               deletedPartitions.pop();
             }
           }
@@ -843,23 +880,22 @@ public class Repl extends ProjectionViewer
             if( length > 0 ) //text was removed, check if need to delete partitions
             {
               int offset = selection.x - getEditOffset();
-              logTrace("offset = "+offset,tracelvl);
               String diff = before.substring(offset,offset + length);
+              logTrace("offset = "+offset,tracelvl);
               logTrace("diff = "+diff,tracelvl);
               logTrace("editPartition = "+editPartition,tracelvl);
               logTrace("readOnlyPos = "+printReadOnlyPositions(),tracelvl);
-              // find if there is a partition with this offset (and check length)
+              // find if there is inside the deleted text
               if( editPartition != null && editPartition.children != null
                   && editPartition.children.size() > 0 )
               {
-                for( PartitionData pd : editPartition.children )
+                List<PartitionData> dp = new ArrayList<PartitionData>();
+                for( PartitionData pd : getCurrentEditPartition().children )
                 {
-                  logTrace("pd = "+pd,tracelvl);
-                  if( pd.start == offset && pd.length == length )
+                  if( pd.start >= offset && pd.start < offset + diff.length() )
                   {
+                    logTrace("pd = "+pd,tracelvl);
                     Position pos = readOnlyPositions.get(pd);
-                    logTrace("Pos {"+pos.offset+","+pos.length+","+pos.isDeleted()+"}",tracelvl);
-                    pd.start = pos.offset;
                     try
                     {
                       doc.removePosition(READ_ONLY_CATEGORY, pos);
@@ -868,11 +904,21 @@ public class Repl extends ProjectionViewer
                     {
                       logException("deletePartInEdit: could not delete position",e1);
                     }
+                    dp.add(pd);
                     readOnlyPositions.remove(pd);
-                    deletedPartitions.push(new FullPartitionData(diff,pd));
-                    editPartition.children.remove(pd);
                   }
-                  break;
+                }
+                for( PartitionData pd : dp )
+                {
+                  editPartition.children.remove(pd);                  
+                }
+                if( dp.size() > 0 )
+                {
+                  DeletedPartitionData dpd = new DeletedPartitionData();
+                  dpd.offset = offset;
+                  dpd.partitions = dp;
+                  dpd.txt = diff;
+                  deletedPartitions.push(dpd);
                 }
               }
             }
@@ -1489,7 +1535,13 @@ public class Repl extends ProjectionViewer
     try
     {
       String txt = doc.get(pd.start, pd.length);
-      deletedPartitions.push(new FullPartitionData(txt,pd));
+      DeletedPartitionData dpd = new DeletedPartitionData();
+      dpd.txt = txt;
+      dpd.offset = pos.offset - getEditOffset();
+      dpd.partitions = new ArrayList<PartitionData>();
+      pd.start -= getEditOffset();
+      dpd.partitions.add(pd);      
+      deletedPartitions.push(dpd);
       doc.replace(pos.getOffset(), pd.length, "");
     }
     catch(BadLocationException e)
