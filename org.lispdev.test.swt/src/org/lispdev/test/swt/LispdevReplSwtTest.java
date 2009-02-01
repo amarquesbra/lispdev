@@ -157,15 +157,15 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     assertEquals("abc123", repl.getEditText());    
   }
   
-  public void testMoreAddvancedReadOnly()
+  public void testMoreAdvancedReadOnly()
   {
     trace(" ===== more advanced test with read-only partitions in edit region");
-    rtxt.typeText("123");
-    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
-    rtxt.typeText(1, 3, "abc");
-    rtxt.selectRange(0, 6, 0);
-    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
-    //- move caret to start put one character (to move read-only)
+    rtxt.typeText("123"); //type "123"
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF); //enter
+    rtxt.typeText(1, 3, "abc"); // type "abc" at read only part
+    rtxt.selectRange(0, 6, 0);  // select prompt and some more on first line
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF); // type enter
+    //- move caret to start of string put one character (to move read-only)
     //- add read only again (same 123) - now have two read-only ranges
     //next to each other
     //- put caret into first range and type couple symbols
@@ -240,7 +240,7 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     rtxt.typeText("123");
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
     
-    trace(" ===== if selection intersects read-only keep it intact");
+    trace(" ===== if selection intersects read-only delete it");
     rtxt.typeText("++");
     rtxt.selectRange(0, 6, 0);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);    
@@ -253,7 +253,7 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     rtxt.typeText("+++");
     rtxt.selectRange(2, 8, 8);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.BS, SWT.BS);
-    assertEquals("++123123+++",repl.getEditText());
+    assertEquals("+++++",repl.getEditText());
     assertTrue(repl.sanityCheck());    
   }
   
@@ -303,20 +303,13 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     rtxt.typeText("---");
     rtxt.selectRange(2,7,2);
     rtxt.typeText("a");
-    assertEquals("aba123---",repl.getEditText());
+    assertEquals("aba---",repl.getEditText());
     
     /*
      * TODO: more tests
-     * - bug: when undo - read only is destroyed (redo should put it back)
      * - copy-paste? (just copy-paste text, drop even formating)?
-     * - bug: if part of read-only is selected and hit del - get exception - fixed
      * - make read only editable? (use copy paste)
      * - mouse events
-     * - when select all and hit delete, need to remove read only partitions
-     * from registry - to test, edit: put some test, then read-only, then
-     * again text, select text around read-only and delete, place where
-     * read-only was located still looks like read-only, also test partial
-     * overlapping of some and complete overlapping of all
      */
     
     
@@ -329,12 +322,31 @@ public class LispdevReplSwtTest extends SWTBotEclipseTestCase
     rtxt.typeText("123");
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
 
-    trace(" ===== Bug#4: (case 1) Make undo-redo work with read-only");
+    trace(" ===== Bug#4: (case 1 - undo) Make undo-redo work with read-only");
     rtxt.typeText("abc");
     rtxt.selectRange(0, 6, 0);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
     rtxt.selectRange(2, 8, 0);
     rtxt.notifyKeyboardEvent(SWT.NONE, SWT.DEL, SWT.DEL);
+    rtxt.notifyKeyboardEvent(SWT.CTRL, 'z', 'z');
+    rtxt.selectRange(2, 9, 0);
+    rtxt.typeText("a");
+    assertEquals("abc123a",repl.getEditText());
+  }
+
+  public void testBug4case2()
+  {
+    rtxt.typeText("123");
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+
+    trace(" ===== Bug#4: (case 2 - undo-redo) Make undo-redo work with read-only");
+    rtxt.typeText("abc");
+    rtxt.selectRange(0, 6, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.LF, SWT.LF);
+    rtxt.selectRange(2, 8, 0);
+    rtxt.notifyKeyboardEvent(SWT.NONE, SWT.DEL, SWT.DEL);
+    rtxt.notifyKeyboardEvent(SWT.CTRL, 'z', 'z');
+    rtxt.notifyKeyboardEvent(SWT.CTRL, 'y', 'y');
     rtxt.notifyKeyboardEvent(SWT.CTRL, 'z', 'z');
     rtxt.selectRange(2, 9, 0);
     rtxt.typeText("a");
