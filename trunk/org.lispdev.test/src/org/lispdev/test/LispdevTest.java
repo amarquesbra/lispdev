@@ -33,13 +33,13 @@ public class LispdevTest extends TestCase
   {
     // redirect trace to string
     StringPrintStream str = new StringPrintStream();
-    LispdevPlugin.getDefault().setTraceStream(str);
+    LispdevDebug.setTraceStream(str);
     
     // run trace
     LispdevDebug.trace(type, msg);
-    LispdevPlugin.getDefault().getTraceStream().flush();
+    LispdevDebug.getTraceStream().flush();
     String res = str.getString();
-    LispdevPlugin.getDefault().setTraceStream(System.out);
+    LispdevDebug.setTraceStream(System.out);
     
     return res;
   }
