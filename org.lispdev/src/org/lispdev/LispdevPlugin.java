@@ -21,7 +21,9 @@ import java.util.*;
 public class LispdevPlugin extends AbstractUIPlugin
 {
 
-  // The plug-in ID
+  /**
+   * The plug-in's ID
+   */
   public static final String ID = "org.lispdev";
 
   public static final String ATTR_LISP_EXE = ID + ".ATTR_LISP_EXE";
@@ -43,43 +45,53 @@ public class LispdevPlugin extends AbstractUIPlugin
     return replView;
   }
 
-  // tracing. More natural place would be LispdevDebug, but I want to keep
-  // functions in LispdevDebug static
-  // Plugin can be static, but still make necessary initializations
-  // To add test category: in the end of list, add public integer incremented by one (moved to LispdevDebug)
-  // add string identifying trace to TRACE_TAGS, add TRACE_PATH+identifying string
-  // to .options file
-  // Usage in code: printTrace(integer representing trace type, message)
-  // Usage in debug: Go-to launch dialog and turn tracing on/off
-  // Usage during run: start eclipse like this: eclipse.exe -debug c:/eclipse/plugins/org.lispdev/.options
-  // not tested yet. maybe need to replace debug with trace
-  private static final String TRACE_PATH = LispdevPlugin.ID + "/trace/";
+  // ============================================================
+  // Some tracing code to keep functions from LispdevDebug static
+  // ============================================================
   
-  // collection of identifying strings
-  public static final String[] TRACE_TAGS = new String[]{"launch","sbcl"};
-  private boolean[] B_TRACES = new boolean[TRACE_TAGS.length];
+  private boolean[] B_TRACES = new boolean[LispdevDebug.TRACE_TAGS.length];
   
   private void initTraces()
   {
-    for(int i = 0; i < TRACE_TAGS.length; ++i)
+    for(int i = 0; i < LispdevDebug.TRACE_TAGS.length; ++i)
     {
-      String val = Platform.getDebugOption(TRACE_PATH+TRACE_TAGS[i]);
+      String val = Platform.getDebugOption(LispdevDebug.TRACE_PATH
+          +LispdevDebug.TRACE_TAGS[i]);
       B_TRACES[i] = (val != null && val.equalsIgnoreCase("true"));
     }
   }
   
   private PrintStream traceStream;
   
+   /**
+   * This is a convenience function for LispdevDebug.setTraceStream(). So use that one. 
+   */
+  @Deprecated
   public void setTraceStream(PrintStream pr)
   {
     traceStream = pr;
   }
   
+   /**
+   * This is a convenience function for LispdevDebug.getTraceStream(). So use that one. 
+   */
+  @Deprecated
   public PrintStream getTraceStream()
   {
-    return traceStream;
+    if( traceStream == null )
+    {
+      return System.out;
+    }
+    else
+    {
+      return traceStream;      
+    }
   }
   
+  /**
+   * This is a convenience function for LispdevDebug.trace(). So use that one. 
+   */
+  @Deprecated
   public void trace(int type, String msg)
   {
     if( B_TRACES[type] )
@@ -90,10 +102,11 @@ public class LispdevPlugin extends AbstractUIPlugin
       }
       else
       {
-        System.out.print(msg);        
+        System.out.print(msg); 
       }
     }
   }
+  // =========== end of tracing code ==========================
   
   // The shared instance
   private static LispdevPlugin plugin;
