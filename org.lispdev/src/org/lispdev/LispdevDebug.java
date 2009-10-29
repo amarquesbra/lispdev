@@ -23,6 +23,7 @@ public class LispdevDebug
   //    (e.g. TRACE_TAGS = new String[]{"launch","sbcl","new-tag"};)
   // 2. add TRACE_ integer in the end of list by incrementing previous by 1
   //    (e.g. after TRACE_SBCL declaration put: public static final int TRACE_NEW_TAG = TRACE_SBCL + 1;)
+  // 3. add org.lispdev/trace/tag=true to the .option file located in the root of plugin folder
   
   /**
    * Identifies trace path for Eclipse tracing facility.
